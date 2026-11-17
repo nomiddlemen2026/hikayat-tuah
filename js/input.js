@@ -20,7 +20,7 @@ window.addEventListener('keydown', e => {
   if (state === 'title') { if (e.code === 'Enter' || e.code === 'Space') startGame(!loadSave()); return; }
   if (state === 'dialog' && (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyJ' || e.code === 'KeyE')) { advanceDialog(); return; }
   if (state === 'dead' && endingT > 1) { respawn(); return; }
-  if (state === 'ending' && endingT > 2) { state = 'play'; return; }
+  if (state === 'ending' && endingT > 2) { afterEnding(); return; }
   if (e.code === 'Escape') { ui.back(); return; }
   if (state === 'menu') return;
   if (e.code === 'Enter') { e.preventDefault(); ui.focusChat(); return; }
@@ -37,8 +37,8 @@ window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; i
 function useHotkey(i) {
   const id = save && save.hotkeys[i];
   if (!id || state !== 'play') return;
-  if (id === 'silat') doSkill();
-  else if (id === 'jamu') usePotion();
+  if (id === 'jamu') usePotion();
+  else if (SKILLS[id]) castSkill(id);
   ui.flashHotkey(i);
 }
 
@@ -63,7 +63,7 @@ cv.addEventListener('pointerdown', e => {
   if (state === 'title') { const b = titleButtons(); for (const t of b) if (x > t.x && x < t.x + t.w && y > t.y && y < t.y + t.h) { startGame(t.fresh); return; } return; }
   if (state === 'dialog') { advanceDialog(); return; }
   if (state === 'dead') { if (endingT > 1) respawn(); return; }
-  if (state === 'ending') { if (endingT > 2) state = 'play'; return; }
+  if (state === 'ending') { if (endingT > 2) afterEnding(); return; }
   if (state === 'menu') { ui.back(); return; }
   const b = hitBtn(x, y);
   if (b) {
@@ -105,11 +105,11 @@ window.onAndroidBack = () => { if (state === 'play' || state === 'menu') { ui.ba
 document.addEventListener('visibilitychange', () => { if (document.hidden) { writeSave(); if (state === 'play') ui.open('options'); audio.suspend(); } else audio.resume(); });
 
 function respawn() {
-  player.hp = maxHp(); player.sp = maxSp(); player.x = (SITES.home.x + 0.5) * TS; player.y = (SITES.home.y + 2.5) * TS; player.inv = 2;
+  player.hp = maxHp(); player.sp = maxSp(); player.x = MAPDEF.respawn.x * TS; player.y = MAPDEF.respawn.y * TS; player.shield = 0; player.inv = 2;
   for (const e of enemies) { if (e.def.boss) { e.hp = e.maxHp; e.x = e.hx; e.y = e.hy; e.aggro = false; e.tele = 0; e.dash = 0; } }
   enemies = enemies.filter(e => !e.summoned);
-  projs = []; teles = []; bossBar = null; trail.forEach(t => { t.x = player.x; t.y = player.y; }); companions.forEach(c => { c.x = player.x; c.y = player.y; });
-  state = 'play'; writeSave(); toast('You recover in Kota Melaka');
+  projs = []; pprojs = []; teles = []; bossBar = null; trail.forEach(t => { t.x = player.x; t.y = player.y; }); companions.forEach(c => { c.x = player.x; c.y = player.y; });
+  state = 'play'; writeSave(); toast('You recover in ' + MAPDEF.townName);
 }
 
 function titleButtons() {

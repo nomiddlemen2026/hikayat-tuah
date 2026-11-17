@@ -12,13 +12,25 @@ function iconURL(id, size = 32) {
     g.scale(size / 16, size / 16);
     if (WEAPONS[id]) {
       if (id === 'fist') { g.fillStyle = '#c68b59'; g.beginPath(); g.arc(16, 17, 8, 0, 7); g.fill(); g.fillStyle = '#a06a3c'; for (let i = 0; i < 4; i++) g.fillRect(10 + i * 3.5, 11, 2.5, 5); }
-      else { g.translate(7, 25); g.rotate(-0.8); g.scale(1.25, 1.25); drawWeapon(g, id, id === 'lembing' ? 16 : 14); }
+      else if (WEAPONS[id].type === 'bow') { g.translate(9, 16); g.rotate(-0.8); g.scale(1.25, 1.25); drawWeapon(g, id, 13); }
+      else { g.translate(7, 25); g.rotate(-0.8); g.scale(1.25, 1.25); drawWeapon(g, id, WEAPONS[id].type === 'spear' ? 16 : 14); }
     } else if (id === 'jamu') {
       g.fillStyle = '#8d5a2b'; g.fillRect(13, 4, 6, 4); g.fillStyle = '#cfe8dc'; g.fillRect(14, 8, 4, 5);
       g.fillStyle = '#2e9d6a'; g.beginPath(); g.arc(16, 20, 8, 0, 7); g.fill(); g.fillStyle = '#69f0ae'; g.beginPath(); g.arc(14, 18, 3, 0, 7); g.fill();
     } else if (id === 'silat') {
       g.strokeStyle = '#ffd54f'; g.lineWidth = 2.5; for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(16, 16, 4 + i * 4, i * 2, i * 2 + 4.2); g.stroke(); }
       g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(16, 16, 2.5, 0, 7); g.fill();
+    } else if (id === 'api') {
+      const gr = g.createRadialGradient(16, 19, 1, 16, 17, 12); gr.addColorStop(0, '#fff3e0'); gr.addColorStop(0.5, '#ff9100'); gr.addColorStop(1, 'rgba(230,60,0,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(16, 3); g.quadraticCurveTo(26, 14, 24, 21); g.arc(16, 21, 8, 0, Math.PI); g.quadraticCurveTo(6, 14, 16, 3); g.fill();
+    } else if (id === 'penawar') {
+      g.fillStyle = '#2e9d6a'; g.beginPath(); g.ellipse(16, 16, 6, 12, 0.6, 0, 7); g.fill(); g.strokeStyle = '#b9f6ca'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(9, 24); g.lineTo(23, 8); g.stroke();
+      g.fillStyle = '#fff'; g.fillRect(21, 19, 8, 2.5); g.fillRect(23.75, 16, 2.5, 8.5);
+    } else if (id === 'petir') {
+      g.fillStyle = '#fff176'; g.strokeStyle = '#f9a825'; g.lineWidth = 1; g.beginPath(); g.moveTo(19, 2); g.lineTo(8, 18); g.lineTo(15, 18); g.lineTo(11, 30); g.lineTo(24, 12); g.lineTo(17, 12); g.closePath(); g.fill(); g.stroke();
+    } else if (id === 'perisai') {
+      g.fillStyle = 'rgba(128,222,234,.85)'; g.strokeStyle = '#e0f7fa'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(16, 3); g.lineTo(27, 8); g.quadraticCurveTo(27, 22, 16, 29); g.quadraticCurveTo(5, 22, 5, 8); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(16, 15, 3, 0, 7); g.fill();
     } else if (id === 'attack') {
       g.translate(6, 26); g.rotate(-0.8); drawWeapon(g, 'keris', 16);
     } else { // empty equipment slot silhouettes
@@ -99,7 +111,7 @@ const ui = (() => {
     if (p) { w.style.left = p[0]; w.style.top = p[1]; }
     else {
       // sensible default spots so several windows can be open side by side
-      const d = { stats: [250, 64], items: [UW - 490, 64], equip: [250, 324], skills: [UW - 510, 330], quests: [UW / 2 - 170, 110], map: [UW / 2 - 198, 80], options: [UW / 2 - 180, UH / 2 - 150] }[win.id] || [UW / 2 - 170, 100];
+      const d = { stats: [250, 64], items: [UW - 490, 64], equip: [250, 324], skills: [UW - 510, 330], quests: [UW / 2 - 190, 90], map: [UW / 2 - 198, 80], options: [UW / 2 - 180, UH / 2 - 150], shop: [UW / 2 - 200, 90], travel: [UW / 2 - 170, 110] }[win.id] || [UW / 2 - 170, 100];
       w.style.left = Math.max(8, d[0]) + 'px'; w.style.top = Math.max(8, d[1]) + 'px';
     }
     // keep on screen
@@ -138,7 +150,10 @@ const ui = (() => {
     else if (a === 'sel') { sel = arg; refreshAll(); }
     else if (a === 'equip') { if (save.owned.includes(arg)) { save.weapon = arg; log('Equipped ' + WEAPONS[arg].name + '.', 'item'); writeSave(); audio.pickup(); } refreshAll(); }
     else if (a === 'use') { if (arg === 'jamu') usePotion(); refreshAll(); }
-    else if (a === 'skill') { if (arg === 'silat') doSkill(); }
+    else if (a === 'skill') { if (state === 'play' || state === 'menu') castSkill(arg); }
+    else if (a === 'buy') buy(arg);
+    else if (a === 'sell') sell(arg);
+    else if (a === 'travel') { close('travel'); travelTo(arg); }
     else if (a === 'hot') useHotkey(+arg);
     else if (a === 'sound') { muted = !muted; try { localStorage.setItem('hikayat_tuah_mute', muted ? '1' : '0'); } catch (e) { } audio.applyMute(); refreshAll(); }
     else if (a === 'resume') close('options');
@@ -199,29 +214,68 @@ const ui = (() => {
       <div class="hint">Armour and accessories will drop from monsters and bosses. Tap the weapon slot to switch weapons.</div>`;
   }
   function rSkills() {
-    const rows = [
-      ['attack', 'Basic Attack', 'Passive', '—', 'Strike with your weapon. Hold the attack key or button to keep swinging.'],
-      ['silat', 'Silat Spin', 'Lv 1', SILAT_SP + ' SP', 'Spin through every enemy around you for 160% damage, briefly untouchable. 5s cooldown. Damage grows with INT.'],
-    ];
-    return `<div class="skills">${rows.map(r => `<div class="sk" ${r[0] === 'silat' ? 'data-act="skill" data-arg="silat"' : ''}><div class="slot"><img src="${iconURL(r[0])}" alt=""></div><div class="sd"><div><b>${r[1]}</b> <small>${r[2]}</small><span class="sp">${r[3]}</span></div><p>${r[4]}</p></div></div>`).join('')}</div>
+    const rows = [['attack', 'Basic Attack', 'Passive', '—', 'Strike with your weapon. Hold the attack key or button to keep swinging. Bows shoot arrows at the nearest enemy.', true]];
+    for (const id of SKILL_ORDER) { const k = SKILLS[id], has = save.skills.includes(id); rows.push([id, k.name, has ? (id === 'silat' ? 'Silat' : 'Magic') : 'Locked', k.sp + ' SP', has ? k.desc + ' Cooldown ' + k.cd + 's.' : 'Learned later in the story.', has]); }
+    return `<div class="skills">${rows.map(r => `<div class="sk ${r[5] ? '' : 'locked'}" ${r[5] && r[0] !== 'attack' ? `data-act="skill" data-arg="${r[0]}"` : ''}><div class="slot"><img src="${iconURL(r[0])}" alt=""></div><div class="sd"><div><b>${r[1]}</b> <small>${r[2]}</small><span class="sp">${r[3]}</span></div><p>${h(r[4])}</p></div></div>`).join('')}</div>
       <div class="foot">Skill Points: <b>${save.skillPts}</b><span class="sep"></span>Job: ${JOBS[save.job].name}</div>
-      <div class="hint">Skill points come from job levels and are spent on job skills once you take up a new job.</div>`;
+      <div class="hint">New magic goes on your hotbar automatically. Magic damage grows with INT.</div>`;
   }
   function rQuests() {
-    const rows = [{ t: 'Prologue: Find a Weapon', d: 'Open the chest beside your house in Kota Melaka.', done: save.prologue }];
+    const rows = [{ h: 'Chapter 1: Quest for the Keris Taming Sari' }, { t: 'Prologue: Find a Weapon', d: 'Open the chest beside your house in Kota Melaka.', done: save.prologue }];
     MISSIONS.forEach((m, i) => rows.push({ t: m.title, d: m.hint, done: i < 4 ? !!save.found[m.id] : !!save.taming }));
-    const cur = rows.findIndex(r => !r.done);
-    return `<div class="quests">${rows.map((r, i) => `<div class="q ${r.done ? 'done' : i === cur ? 'cur' : 'locked'}"><span class="st">${r.done ? '✔' : i === cur ? '▶' : '·'}</span><div><b>${h(r.t)}</b><p>${h(r.d)}</p></div></div>`).join('')}</div>
-      <div class="foot">Main story ${rows.filter(r => r.done).length}/${rows.length}<span class="sep"></span>Brothers found ${foundCount()}/4</div>`;
+    for (const n of [2, 3, 4]) {
+      const ch = CHAPTERS[n]; rows.push({ h: ch.title + (save.chapter < n ? ' (locked)' : '') });
+      if (save.chapter < n) continue;
+      ch.missions.forEach((m, i) => rows.push({ t: m.title, d: m.hint, done: save.chapter > n || i < save.ci }));
+    }
+    const cur = rows.findIndex(r => r.t && !r.done), cm = curMission();
+    const done = rows.filter(r => r.done).length, total = 6 + 12;
+    return `<div class="quests">${rows.map((r, i) => r.h ? `<div class="qh">${h(r.h)}</div>` : `<div class="q ${r.done ? 'done' : i === cur ? 'cur' : 'locked'}"><span class="st">${r.done ? '✔' : i === cur ? '▶' : '·'}</span><div><b>${h(r.t)}</b><p>${h(r.d)}${i === cur && cm && cm.type === 'hunt' ? ' (' + Math.min(save.hunt, cm.n) + '/' + cm.n + ')' : ''}</p></div></div>`).join('')}</div>
+      <div class="foot">Story ${done}/${total}<span class="sep"></span>Chapter ${Math.min(save.chapter, 4)}/4</div>`;
   }
-  function rMap() { return `<canvas id="worldmap" width="384" height="288"></canvas><div class="foot">Red: you · White: objective · Coloured: your brothers · Gold: temple</div>`; }
+  function rMap() { return `<canvas id="worldmap" width="384" height="288"></canvas><div class="foot"><b>${h(MAPDEF.name)}</b><span class="sep"></span>Red: you · White: objective · Blue: boatman · Orange: boss</div>`; }
+  function rTravel() {
+    const near = npcs.some(n => n.name === 'Pak Kemudi' && dist(n.x, n.y, player.x, player.y) < 80);
+    const rows = MAP_ORDER.map(id => {
+      const m = MAPS[id], has = save.unlocked.includes(id), here = id === MAP;
+      return `<div class="dest ${has ? '' : 'locked'} ${here ? 'here' : ''}"><div><b>${has ? h(m.name) : '???'}</b><small>Chapter ${m.chapter}${has ? '' : ' · locked'}</small></div>${here ? '<span class="tag">You are here</span>' : has ? `<button data-act="travel" data-arg="${id}" ${near ? '' : 'disabled'}>Sail</button>` : '<span class="tag">Locked</span>'}</div>`;
+    }).join('');
+    return `<div class="travel">${rows}</div><div class="hint">${near ? 'Pak Kemudi will sail you to any place you have unlocked.' : 'Talk to Pak Kemudi at the jetty to sail.'}</div>`;
+  }
+  let shopMap = 'melaka', shopName = '';
+  function rShop() {
+    const stock = SHOPS[shopMap].map(id => {
+      const isW = !!WEAPONS[id], it = isW ? WEAPONS[id] : ITEMS[id], price = isW ? weaponValue(id) : it.price, owned = isW && save.owned.includes(id);
+      return `<div class="srow"><div class="slot" style="--rc:${RARITY[it.rarity]}"><img src="${iconURL(id)}" alt=""></div><div class="sinfo"><b style="color:${it.rarity === 'common' ? '#2a2a2a' : it.rarity === 'uncommon' ? '#2e8b3e' : RARITY[it.rarity]}">${h(it.name)}</b><small>${isW ? 'ATK ' + it.dmg + (it.type === 'bow' ? ' · ranged' : '') + ' · ' + it.rarity : h(it.desc)}</small></div><span class="price">${price.toLocaleString()}</span><button data-act="buy" data-arg="${id}" ${owned || save.gold < price ? 'disabled' : ''}>${owned ? 'Owned' : 'Buy'}</button></div>`;
+    }).join('');
+    const sellable = save.owned.filter(id => id !== 'fist' && id !== save.weapon && !WEAPONS[id].story);
+    const sells = sellable.length ? sellable.map(id => `<div class="srow"><div class="slot" style="--rc:${RARITY[WEAPONS[id].rarity]}"><img src="${iconURL(id)}" alt=""></div><div class="sinfo"><b>${h(WEAPONS[id].name)}</b><small>ATK ${WEAPONS[id].dmg}</small></div><span class="price">${Math.floor(weaponValue(id) / 2).toLocaleString()}</span><button data-act="sell" data-arg="${id}">Sell</button></div>`).join('') : '<div class="hint">Nothing to sell. Your equipped weapon and legendary blades cannot be sold.</div>';
+    return `<div class="shop"><div class="qh">Buy from ${h(shopName)}</div>${stock}<div class="qh">Sell</div>${sells}</div><div class="foot">${CURRENCY}: <b class="gold">${save.gold.toLocaleString()}</b><span class="sep"></span>Jamu ${save.potions}</div>`;
+  }
+  function buy(id) {
+    const isW = !!WEAPONS[id], price = isW ? weaponValue(id) : ITEMS[id].price;
+    if (save.gold < price) { log('Not enough ' + CURRENCY + '.', 'err'); return; }
+    if (isW && save.owned.includes(id)) return;
+    save.gold -= price;
+    if (isW) { save.owned.push(id); log('Bought ' + WEAPONS[id].name + '. Equip it from Items (I).', 'item'); }
+    else { save.potions++; log('Bought 1 ' + ITEMS[id].name + '.', 'item'); }
+    audio.pickup(); writeSave(); refreshAll();
+  }
+  function sell(id) {
+    if (!save.owned.includes(id) || id === save.weapon || WEAPONS[id].story || id === 'fist') return;
+    const v = Math.floor(weaponValue(id) / 2);
+    save.owned = save.owned.filter(x => x !== id); save.gold += v;
+    log('Sold ' + WEAPONS[id].name + ' for ' + v.toLocaleString() + ' ' + CURRENCY + '.', 'item');
+    audio.pickup(); writeSave(); refreshAll();
+  }
+
   function rOptions() {
     return `<div class="opts"><button data-act="sound">${muted ? 'Sound: Off' : 'Sound: On'}</button><button data-act="resetui">Reset window positions</button>${isTouch ? '<button data-act="full">Fullscreen</button>' : ''}${gfx.ok ? `<button data-act="gfx">Graphics: ${gfxMode === '3d' ? '3D' : 'Classic 2D'}</button>` : ''}<button class="pri" data-act="resume">Resume game</button></div>
       <table class="keys">
         <tr><th>Move</th><td>WASD / arrows · touch: drag on the left</td></tr>
         <tr><th>Camera</th><td>Right-drag or Z / X to rotate, mouse wheel to zoom · touch: rotate and zoom buttons</td></tr>
         <tr><th>Attack / talk</th><td>J, Space or left-click (hold to repeat)</td></tr>
-        <tr><th>Hotkeys</th><td>1–8 or F1–F8 (Silat Spin, Jamu)</td></tr>
+        <tr><th>Hotkeys</th><td>1–8 or F1–F8 (Silat Spin, Jamu, magic)</td></tr>
         <tr><th>Windows</th><td>C Status · I Items · U Equip · Y Skills · Q Quests · M Map · O Options</td></tr>
         <tr><th>Chat</th><td>Enter to type, /help for commands · Esc closes windows</td></tr>
       </table><div class="hint">The game is paused while this window is open. Progress saves automatically.</div>`;
@@ -275,7 +329,7 @@ const ui = (() => {
     if (v[0] !== '/') { log('Hang Tuah : ' + v, 'chat'); return; }
     const cmd = v.slice(1).split(' ')[0].toLowerCase();
     if (cmd === 'help') log('Commands: /where, /stats, /save, /clear, /help', 'sys');
-    else if (cmd === 'where') { const tx = Math.floor(player.x / TS), ty = Math.floor(player.y / TS), r = regionAt(tx, ty); log('You are at ' + (r === 'meadow' ? 'Melaka Countryside' : REGIONS[r].name) + ' (' + tx + ', ' + ty + ').', 'sys'); }
+    else if (cmd === 'where') { const tx = Math.floor(player.x / TS), ty = Math.floor(player.y / TS); log('You are at ' + regionName(regionAt(tx, ty)) + ', ' + MAPDEF.name + ' (' + tx + ', ' + ty + ').', 'sys'); }
     else if (cmd === 'stats') log(STATS.map(k => STAT_INFO[k][0] + ' ' + save.stats[k]).join(' · ') + ' · ATK ' + weaponAtk(), 'sys');
     else if (cmd === 'save') { writeSave(); log('Game saved.', 'sys'); }
     else if (cmd === 'clear') { logLines.length = 0; $('chatlog').innerHTML = ''; }
@@ -316,7 +370,7 @@ const ui = (() => {
     set($('s-party'), 'html', party);
     // minimap + tracker
     const tx = Math.floor(p.x / TS), ty = Math.floor(p.y / TS), reg = regionAt(tx, ty);
-    set(wins.mini.el.querySelector('.tt'), 'text', reg === 'meadow' ? 'Melaka Countryside' : REGIONS[reg].name);
+    set(wins.mini.el.querySelector('.tt'), 'text', regionName(reg));
     set($('mm-xy'), 'text', tx + ', ' + ty);
     if (frameN % 3 === 0) drawMinimap();
     const ot = objectiveText();
@@ -328,6 +382,7 @@ const ui = (() => {
       img.style.visibility = id ? '' : 'hidden';
       let cd = 0, n = '', off = false;
       if (id === 'silat') { cd = Math.max(0, p.skillCd / 5); off = p.sp < SILAT_SP || save.weapon === 'fist'; }
+      else if (SKILLS[id]) { cd = skillCdLeft(id) / SKILLS[id].cd; off = p.sp < SKILLS[id].sp; }
       if (id === 'jamu') { n = '' + save.potions; off = save.potions <= 0; }
       el.querySelector('.cd').style.height = (cd * 100).toFixed(0) + '%';
       set(el.querySelector('.n'), 'text', n);
@@ -341,7 +396,7 @@ const ui = (() => {
       set(dw.querySelector('.tt'), 'text', l[0] ? '[' + l[0] + ']' : '');
       set($('d-text'), 'text', l[1].slice(0, Math.floor(dialog.ch)));
       const hk = Object.keys(HEROES).find(k => HEROES[k].name === l[0]);
-      const pu = hk ? speakerURL(hk) : l[0] === 'Bendahara' ? speakerURL('bendahara') : l[0] ? speakerURL('npc:' + l[0]) : '';
+      const pu = hk ? speakerURL(hk) : l[0] && NPC_PALS[l[0]] ? speakerURL('npc:' + l[0]) : '';
       set($('d-port'), 'src', pu); $('d-port').style.display = pu ? '' : 'none';
       set($('d-next'), 'text', dialog.i >= dialog.lines.length - 1 ? 'Close' : 'Next');
     } else if (dw.style.display !== 'none') dw.style.display = 'none';
@@ -356,7 +411,7 @@ const ui = (() => {
     return speakerCache[k] = mk(96, 96, g => {
       g.fillStyle = '#e9e2cf'; g.fillRect(0, 0, 96, 96); g.translate(48, 140); g.scale(4.6, 4.6);
       if (HEROES[k]) drawHero(g, 0, 0, HEROES[k], Math.PI / 2, 0, null, 0);
-      else { const npc = { bendahara: 'bendahara', 'npc:Pak Mat': 'villager1', 'npc:Mak Som': 'villager2', 'npc:Tok Besi': 'smith' }[k]; if (npc) drawNPC(g, 0, 0, npc, 0); }
+      else if (NPC_PALS[k.slice(4)]) drawHero(g, 0, 0, NPC_PALS[k.slice(4)], Math.PI / 2, 0, null, 0);
     }).toDataURL();
   }
   function drawMinimap() {
@@ -366,7 +421,7 @@ const ui = (() => {
     g.imageSmoothingEnabled = false; g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
     g.drawImage(mc, cx, cy, vw, vh, 0, 0, c.width, c.height);
     const dot = (x, y, col, r) => { g.fillStyle = col; g.beginPath(); g.arc((x - cx) * sc, (y - cy) * sc, r, 0, 7); g.fill(); g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1.5; g.stroke(); };
-    for (const n of npcs) dot(n.x / TS, n.y / TS, n.kind === 'captive' ? '#90caf9' : '#7cf', 4);
+    for (const n of npcs) dot(n.x / TS, n.y / TS, n.kind === 'captive' ? '#90caf9' : n.name === 'Pak Kemudi' ? '#2979ff' : '#7cf', 4);
     for (const e of enemies) if (e.def.boss) dot(e.x / TS, e.y / TS, '#ff9800', 5);
     const op = objectivePos(); if (op && Math.floor(time * 3) % 2) dot(op.x, op.y, '#fff', 6);
     dot(player.x / TS, player.y / TS, '#ff1744', 5);
@@ -378,8 +433,9 @@ const ui = (() => {
     g.font = 'bold 10px sans-serif'; g.textAlign = 'center';
     for (const k in REGIONS) { const r = REGIONS[k]; const x = (r.x0 + r.x1) / 2 * sc, y = (r.y0 + r.y1) / 2 * sc; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.7)'; g.strokeText(r.name, x, y); g.fillStyle = '#fff'; g.fillText(r.name, x, y); }
     const dot = (x, y, col, r) => { g.fillStyle = col; g.beginPath(); g.arc(x * sc, y * sc, r, 0, 7); g.fill(); g.strokeStyle = '#000'; g.lineWidth = 1; g.stroke(); };
-    for (const k of ['jebat', 'lekir', 'lekiu', 'kasturi']) if (!save.found[k]) dot(SITES[k].x + 0.5, SITES[k].y + 0.5, HEROES[k].baju, 5);
-    dot(81.5, 9, '#ffd54f', 5);
+    if (MAP === 'melaka') { for (const k of ['jebat', 'lekir', 'lekiu', 'kasturi']) if (!save.found[k]) dot(SITES[k].x + 0.5, SITES[k].y + 0.5, HEROES[k].baju, 5); dot(81.5, 9, '#ffd54f', 5); }
+    dot(MAPDEF.boat.x, MAPDEF.boat.y, '#2979ff', 5);
+    for (const e of enemies) if (e.def.boss) dot(e.x / TS, e.y / TS, '#ff9800', 5);
     const op = objectivePos(); if (op && Math.floor(time * 3) % 2) dot(op.x, op.y, '#fff', 6);
     dot(player.x / TS, player.y / TS, '#ff1744', 5);
   }
@@ -395,11 +451,14 @@ const ui = (() => {
       makeWin('quests', 'Quest Journal', { float: true, cls: 'w-quests', render: rQuests });
       makeWin('map', 'World Map', { float: true, cls: 'w-map', render: rMap });
       makeWin('options', 'Options', { float: true, cls: 'w-options', render: rOptions });
+      makeWin('shop', 'Shop', { float: true, cls: 'w-shop', render: rShop });
+      makeWin('travel', 'Sail with Pak Kemudi', { float: true, cls: 'w-travel', render: rTravel });
       root.style.display = 'none';
       window.addEventListener('resize', () => { for (const w of Object.values(wins)) if (w.float && w.open) place(w); });
     },
     show(v) { root.style.display = v ? '' : 'none'; },
     open, close, toggle, back, refreshAll, frame, flashHotkey,
+    openShop(m, name) { shopMap = m; shopName = name; open('shop'); },
     focusChat() { if (!isTouch) $('chatin').focus(); },
     log: addLog,
     blocking() { return isTouch && Object.values(wins).some(w => w.float && w.open); },

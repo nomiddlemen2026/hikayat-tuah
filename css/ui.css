@@ -200,6 +200,24 @@ table.keys td { padding: 3px 5px; border-bottom: 1px solid #eee5cf; }
 #ui.compact #w-status .tb, #ui.compact #w-mini .tb { cursor: pointer; }
 /* place the chat log under the status window in compact mode */
 #ui.compact #w-chat { top: calc(6px + var(--status-h, 150px) + 4px); }
+/* ---------- chapters: quest headers, shop, travel ---------- */
+.w-shop { width: 380px; } .w-travel { width: 320px; }
+.w-quests .bd { max-height: 70vh; overflow-y: auto; }
+.qh { margin: 6px 0 3px; padding: 2px 6px; font-weight: bold; color: #fff; background: linear-gradient(90deg, #3d5f99, rgba(61,95,153,0)); border-radius: 3px; font-size: 10.5px; }
+.skills .sk.locked { opacity: .5; }
+.shop { max-height: 60vh; overflow-y: auto; }
+.srow { display: flex; align-items: center; gap: 6px; padding: 4px; margin-bottom: 3px; background: #fff; border: 1px solid #d6ccb4; border-radius: 3px; }
+.srow .slot { width: 34px; flex: none; }
+.srow .sinfo { flex: 1; min-width: 0; }
+.srow .sinfo b, .srow .sinfo small { display: block; }
+.srow .sinfo small { color: var(--mute); font-size: 9.5px; }
+.srow .price { color: #9a6a00; font-weight: bold; min-width: 52px; text-align: right; }
+.travel .dest { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 8px; margin-bottom: 4px; background: #fff; border: 1px solid #d6ccb4; border-radius: 3px; }
+.travel .dest b, .travel .dest small { display: block; }
+.travel .dest small { color: var(--mute); font-size: 9.5px; }
+.travel .dest.here { border-color: var(--gold); background: #fff8e1; }
+.travel .dest.locked { opacity: .55; }
+.travel .tag { font-size: 10px; color: var(--mute); }
 /* phones: the chat log never blocks the movement joystick */
 #ui.touch #w-chat, #ui.touch #w-chat * { pointer-events: none; }
 #ui.touch #chatform { display: none; }

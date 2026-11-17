@@ -46,7 +46,7 @@ function render() {
   if (player.hurt > 0) { ctx.fillStyle = 'rgba(255,0,0,.15)'; ctx.fillRect(0, 0, W, H); }
   renderHUD(reg);
   ui.frame();
-  if (state === 'dead') renderOverlay('You have fallen...', 'Tap to recover in Kota Melaka', 'rgba(60,0,0,');
+  if (state === 'dead') renderOverlay('You have fallen...', 'Tap to recover in ' + MAPDEF.townName, 'rgba(60,0,0,');
   if (state === 'ending') renderEnding();
 }
 // classic top-down 2D view (fallback when WebGL is missing or chosen in Options)
@@ -68,8 +68,8 @@ function renderWorld2D() {
     ctx.drawImage(spr, x * TS, y * TS);
   }
   // altar
-  ctx.fillStyle = '#9b927f'; ctx.fillRect(78 * TS, 3.6 * TS, 3 * TS + 16, 1.4 * TS); ctx.fillStyle = '#c9a227'; ctx.fillRect(78 * TS, 3.6 * TS, 3 * TS + 16, 4);
-  if (!save.taming) { ctx.save(); ctx.translate(81.5 * TS, 4.2 * TS); ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 12 + 6 * Math.sin(time * 3); drawWeapon(ctx, 'taming', 18); ctx.restore(); }
+  if (MAP === 'melaka') { ctx.fillStyle = '#9b927f'; ctx.fillRect(78 * TS, 3.6 * TS, 3 * TS + 16, 1.4 * TS); ctx.fillStyle = '#c9a227'; ctx.fillRect(78 * TS, 3.6 * TS, 3 * TS + 16, 4); }
+  if (MAP === 'melaka' && !save.taming) { ctx.save(); ctx.translate(81.5 * TS, 4.2 * TS); ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 12 + 6 * Math.sin(time * 3); drawWeapon(ctx, 'taming', 18); ctx.restore(); }
   for (const b of buildings) if (b.x * TS < cam.x + vw + 64 && (b.x + b.w) * TS > cam.x - 64 && b.y * TS < cam.y + vh + 64 && (b.y + b.h) * TS > cam.y - 64) drawBuilding(ctx, b);
   // telegraphs
   for (const t of teles) {
@@ -82,7 +82,7 @@ function renderWorld2D() {
   // entities sorted by y
   const ents = [];
   for (const c of chests) ents.push({ y: c.y, f: () => drawChest(ctx, c) });
-  for (const n of npcs) ents.push({ y: n.y, f: () => { if (n.kind === 'captive') drawHero(ctx, n.x, n.y, HEROES[n.hero], Math.PI / 2, 0, null, 0, { tied: !save.bossDead[CAPTOR[n.hero]] }); else drawNPC(ctx, n.x, n.y, n.kind, 0); label(ctx, n.name, n.x, n.y - 34, n.kind === 'captive' ? '#90caf9' : '#fff'); } });
+  for (const n of npcs) ents.push({ y: n.y, f: () => { if (n.kind === 'captive') drawHero(ctx, n.x, n.y, HEROES[n.hero], Math.PI / 2, 0, null, 0, { tied: !save.bossDead[CAPTOR[n.hero]] }); else drawNPC(ctx, n.x, n.y, n.kind, 0, n); label(ctx, n.name, n.x, n.y - 34, n.kind === 'captive' ? '#90caf9' : '#fff'); } });
   for (const e of enemies) if (e.x > cam.x - 80 && e.x < cam.x + vw + 80 && e.y > cam.y - 80 && e.y < cam.y + vh + 80) ents.push({ y: e.y, f: () => { drawEnemy(ctx, e, time); if (!e.def.boss && (e.aggro || e.hp < e.maxHp)) { ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(e.def.name, e.x, e.y - 33); ctx.fillStyle = '#ffe9e9'; ctx.fillText(e.def.name, e.x, e.y - 33); } if (!e.def.boss && e.hp < e.maxHp) { ctx.fillStyle = '#000'; ctx.fillRect(e.x - 13, e.y - 30, 26, 4); ctx.fillStyle = '#e53935'; ctx.fillRect(e.x - 12, e.y - 29, 24 * e.hp / e.maxHp, 2); } } });
   for (const c of companions) ents.push({ y: c.y, f: () => drawHero(ctx, c.x, c.y, HEROES[c.id], c.face, c.walk, 'keris', c.atk, { moving: c.moving }) });
   ents.push({ y: player.y, f: () => { if (player.inv > 0 && Math.floor(time * 20) % 2 && player.hurt < 0) return; drawHero(ctx, player.x, player.y, HEROES.tuah, player.spin > 0 ? player.face + time * 30 : player.face, player.walk, save.weapon, player.atkAnim, { moving: player.moving, flash: player.hurt > 0 }); } });
@@ -95,12 +95,16 @@ function renderWorld2D() {
     ctx.restore();
   }
   // projectiles
-  for (const pr of projs) {
+  for (const pr of [...projs, ...pprojs]) {
     ctx.save(); ctx.translate(pr.x, pr.y);
-    if (pr.kind === 'orb') { ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(0, 0, 1, 0, 0, 9); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, 'rgba(120,255,200,.8)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, 9, 0, 7); ctx.fill(); }
+    if (pr.kind === 'arrow') { ctx.rotate(Math.atan2(pr.vy, pr.vx)); ctx.fillStyle = '#8d6e63'; ctx.fillRect(-9, -1, 16, 2); ctx.fillStyle = '#cfd8dc'; ctx.fillRect(7, -2, 4, 4); }
+    else if (pr.kind === 'rock') { ctx.fillStyle = '#6d675e'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); }
+    else if (pr.kind === 'orb' || pr.kind === 'fire') { const fire = pr.kind === 'fire'; ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(0, 0, 1, 0, 0, 9); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, fire ? 'rgba(255,120,20,.85)' : 'rgba(120,255,200,.8)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, 9, 0, 7); ctx.fill(); }
     else { ctx.rotate(time * 20); ctx.fillStyle = '#cfd8dc'; ctx.fillRect(-6, -1.5, 12, 3); ctx.fillStyle = '#5d3a1a'; ctx.fillRect(-6, -1.5, 4, 3); }
     ctx.restore();
   }
+  for (const b of bolts) { ctx.strokeStyle = 'rgba(255,245,157,' + Math.min(1, b.t * 4) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x, b.y - 120); for (let i = 1; i <= 6; i++) ctx.lineTo(b.x + Math.sin(i * 2.1 + b.t * 50) * 8, b.y - 120 + i * 20); ctx.stroke(); }
+  if (player.shield > 0) { ctx.strokeStyle = 'rgba(128,222,234,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(player.x, player.y - 4, 20, 0, 7); ctx.stroke(); }
   for (const q of parts) { ctx.globalAlpha = Math.min(1, q.life * 3); ctx.fillStyle = q.col; ctx.fillRect(q.x - q.sz / 2, q.y - q.sz / 2, q.sz, q.sz); }
   ctx.globalAlpha = 1;
   for (const t of texts) { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.font = `bold ${t.big ? 14 : 11}px sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(t.t, t.x, t.y); ctx.fillStyle = t.col; ctx.fillText(t.t, t.x, t.y); }
@@ -111,8 +115,8 @@ function renderWorld2D() {
   ctx.restore();
   // region tint
   const reg = regionAt(Math.floor(player.x / TS), Math.floor(player.y / TS));
-  if (reg === 'swamp') { ctx.fillStyle = 'rgba(60,90,70,.18)'; ctx.fillRect(0, 0, W, H); }
-  if (reg === 'temple') { const gr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.7); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(20,0,30,.55)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
+  if (MAP === 'melaka' && reg === 'swamp') { ctx.fillStyle = 'rgba(60,90,70,.18)'; ctx.fillRect(0, 0, W, H); }
+  if (regionDef(reg).dark && reg !== 'swamp') { const gr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.7); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(20,0,30,.55)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
 }
 // 2D overlay on top of the 3D scene: names, HP bars, damage numbers, interaction marker
 function renderOverlay3D() {
@@ -199,7 +203,7 @@ function renderHUD(reg) {
 let miniCanvas = null;
 function getMiniCanvas() {
   if (!miniCanvas) miniCanvas = mk(MW, MH, g => {
-    const col = { [T.GRASS]: '#4f9a3a', [T.FLOWER]: '#4f9a3a', [T.PATH]: '#c9a36a', [T.SAND]: '#e8d39a', [T.WATER]: '#2f86b8', [T.DEEP]: '#1e5a8c', [T.TREE]: '#2f7d32', [T.JTREE]: '#1f5a2a', [T.ROCK]: '#6f6f73', [T.DIRT]: '#8d7b68', [T.SWAMP]: '#4b5e3a', [T.MANGROVE]: '#35502c', [T.FLOOR]: '#7d7a70', [T.WALL]: '#3a3630', [T.PILLAR]: '#3a3630', [T.GATE]: '#d4a82a', [T.BRIDGE]: '#a7743f', [T.PLANK]: '#8f6239', [T.PALM]: '#2e8b3e', [T.DARK]: '#2f6b2c', [T.BLD]: '#9c2a1c' };
+    const col = { [T.LAVA]: '#ff6a00', [T.CRYSTAL]: '#7fe3f5', [T.MARBLE]: '#e9e4f2', [T.ASH]: '#5a514c', [T.PADDY]: '#7fbf6a', [T.MOSS]: '#3f8f86', [T.GRASS]: '#4f9a3a', [T.FLOWER]: '#4f9a3a', [T.PATH]: '#c9a36a', [T.SAND]: '#e8d39a', [T.WATER]: '#2f86b8', [T.DEEP]: '#1e5a8c', [T.TREE]: '#2f7d32', [T.JTREE]: '#1f5a2a', [T.ROCK]: '#6f6f73', [T.DIRT]: '#8d7b68', [T.SWAMP]: '#4b5e3a', [T.MANGROVE]: '#35502c', [T.FLOOR]: '#7d7a70', [T.WALL]: '#3a3630', [T.PILLAR]: '#3a3630', [T.GATE]: '#d4a82a', [T.BRIDGE]: '#a7743f', [T.PLANK]: '#8f6239', [T.PALM]: '#2e8b3e', [T.DARK]: '#2f6b2c', [T.BLD]: '#9c2a1c' };
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { g.fillStyle = col[map[y * MW + x]] || '#000'; g.fillRect(x, y, 1, 1); }
   });
   return miniCanvas;
@@ -213,11 +217,12 @@ function renderEnding() {
   const s = UIS;
   ctx.fillStyle = `rgba(10,5,0,${Math.min(0.85, endingT * 0.5)})`; ctx.fillRect(0, 0, W, H);
   if (endingT < 0.8) return;
-  txt('Keris Taming Sari', W / 2, H * 0.2, 26 * s, '#ffd54f', 'center');
-  txt('The five warriors of Melaka are united once more.', W / 2, H * 0.2 + 26 * s, 12 * s, '#fff', 'center', false);
+  const fin = save.chapter >= 5;
+  txt(fin ? 'Hikayat Tuah: Tamat' : 'Keris Taming Sari', W / 2, H * 0.2, 26 * s, '#ffd54f', 'center');
+  txt(fin ? 'The Shadow King is defeated. Melaka and the Bunian are at peace.' : 'The five warriors of Melaka are united once more.', W / 2, H * 0.2 + 26 * s, 12 * s, '#fff', 'center', false);
   const order = ['jebat', 'lekir', 'tuah', 'lekiu', 'kasturi'];
-  order.forEach((k, i) => { const x = W / 2 + (i - 2) * 70 * s, y = H * 0.62; ctx.save(); ctx.translate(x, y); ctx.scale(2.4 * s, 2.4 * s); drawHero(ctx, 0, 0, HEROES[k], Math.PI / 2, time, k === 'tuah' ? 'taming' : 'keris', 0); ctx.restore(); txt(HEROES[k].name, x, y + 46 * s, 10 * s, HEROES[k].trim, 'center'); });
-  if (endingT > 2) txt('THE END  ·  Tap to keep exploring', W / 2, H - 20 * s, 12 * s, '#ffe082', 'center');
+  order.forEach((k, i) => { const x = W / 2 + (i - 2) * 70 * s, y = H * 0.62; ctx.save(); ctx.translate(x, y); ctx.scale(2.4 * s, 2.4 * s); drawHero(ctx, 0, 0, HEROES[k], Math.PI / 2, time, k === 'tuah' ? (fin ? 'kerisBunian' : 'taming') : 'keris', 0); ctx.restore(); txt(HEROES[k].name, x, y + 46 * s, 10 * s, HEROES[k].trim, 'center'); });
+  if (endingT > 2) txt(fin ? 'THE END  ·  Thank you for playing  ·  Tap to keep exploring' : 'Chapter 1 complete  ·  Tap to continue', W / 2, H - 20 * s, 12 * s, '#ffe082', 'center');
 }
 function renderTitle() {
   const s = UIS;

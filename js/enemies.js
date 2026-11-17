@@ -7,18 +7,20 @@ function spawnEnemy(type, x, y, home) {
   enemies.push(e); return e;
 }
 function trySpawn(r, initial) {
-  const sp = SPAWNS[r], R = r === 'meadow' ? null : REGIONS[r];
+  const sp = SPAWNS[r], R = r === 'meadow' ? null : REGIONS[r], sf = MAPDEF.safe;
   for (let tries = 0; tries < 20; tries++) {
     let tx, ty;
     if (R) { tx = Math.floor(rr(R.x0 + 1, R.x1)); ty = Math.floor(rr(R.y0 + 1, R.y1)); }
-    else { tx = Math.floor(rr(2, MW - 2)); ty = Math.floor(rr(2, MH - 8)); if (regionAt(tx, ty) !== 'meadow') continue; }
-    if (SOLID.has(getT(tx, ty)) || getT(tx, ty) === T.PATH || getT(tx, ty) === T.BRIDGE) continue;
-    if (dist(tx, ty, 47, 50) < 14) continue; // keep town safe
-    if (r === 'temple' && foundCount() < 4 && ty < 17) continue;
+    else { tx = Math.floor(rr(2, MW - 2)); ty = Math.floor(rr(2, MH - 8)); }
+    if (regionAt(tx, ty) !== r) continue;
+    const t = getT(tx, ty);
+    if (SOLID.has(t) || t === T.PATH || t === T.BRIDGE || t === T.PLANK) continue;
+    if (dist(tx, ty, sf.x, sf.y) < sf.r) continue; // keep towns safe
+    if (MAP === 'melaka' && r === 'temple' && foundCount() < 4 && ty < 17) continue;
     const px = (tx + 0.5) * TS, py = (ty + 0.5) * TS;
     if (player && dist(px, py, player.x, player.y) < (initial ? 200 : 420)) continue;
     let near = false; for (const s in SITES) if (dist(tx, ty, SITES[s].x, SITES[s].y) < 5 && s !== 'home') near = true;
-    if (near) continue;
+    if (near || dist(tx, ty, MAPDEF.boat.x, MAPDEF.boat.y) < 8) continue;
     const type = sp.list[Math.floor(Math.random() * sp.list.length)];
     const e = spawnEnemy(type, px, py); e.spawnRegion = r; return e;
   }
@@ -38,6 +40,7 @@ function moveEnt(e, dx, dy, fly) {
 function hurtPlayer(dmg, fromX, fromY) {
   if (player.inv > 0 || state !== 'play') return;
   if (DEBUG && window.GOD) dmg = 0;
+  if (player.shield > 0) dmg *= 0.5;
   if (Math.random() < dodgeChance()) { player.inv = 0.3; texts.push({ x: player.x, y: player.y - 30, t: 'Miss', col: '#90caf9', life: 0.8 }); return; }
   player.hp -= dmg; player.inv = 0.7; player.hurt = 0.2; lastHurt = time; shake = Math.min(10, shake + 5);
   const a = Math.atan2(player.y - fromY, player.x - fromX);
@@ -62,12 +65,15 @@ function killEnemy(e) {
   save.gold += gold;
   log('Defeated ' + d.name + ': +' + d.xp + ' Base EXP, +' + jx + ' Job EXP, +' + gold + ' ' + CURRENCY + '.', 'exp');
   gainXP(d.xp); gainJobXP(jx);
+  missionKill(e);
   if (Math.random() < (d.boss ? 1 : 0.12)) { save.potions++; texts.push({ x: e.x, y: e.y - 40, t: '+1 Jamu', col: '#80cbc4', life: 1.2 }); log('You picked up 1 Jamu potion.', 'item'); }
   if (d.boss) {
     save.bossDead[e.type] = true; shake = 14; audio.fanfare();
     bossBar = null;
+    const k = Object.keys(CAPTOR).find(k => CAPTOR[k] === e.type);
     if (e.type === 'guardian') toast('The guardian is defeated! Claim the keris at the altar.');
-    else { const k = Object.keys(CAPTOR).find(k => CAPTOR[k] === e.type); toast(EDEF[e.type].name + ' defeated! Free ' + HEROES[k].name + '.'); }
+    else if (k) toast(EDEF[e.type].name + ' defeated! Free ' + HEROES[k].name + '.');
+    else toast(d.name + ' defeated!');
     writeSave();
   }
 }
@@ -83,7 +89,7 @@ function gainXP(n) {
   }
 }
 function shoot(e, ang, kind, spd) {
-  projs.push({ x: e.x, y: e.y - 8, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: kind === 'orb' ? 6 : 4, dmg: e.def.dmg * (e.def.boss ? 0.7 : 1), life: 2.6, kind, a: ang });
+  projs.push({ x: e.x, y: e.y - 8, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: kind === 'orb' || kind === 'fire' ? 6 : 4, dmg: e.def.dmg * (e.def.boss ? 0.7 : 1), life: 2.6, kind, a: ang });
 }
 function updateEnemy(e, dt) {
   const d = e.def, p = player;
@@ -123,14 +129,14 @@ function updateEnemy(e, dt) {
   if (d.ai === 'ranged') {
     if (dp > 150) { moveEnt(e, Math.cos(a) * sp * dt, Math.sin(a) * sp * dt, d.fly); e.moving = true; }
     else if (dp < 100) { moveEnt(e, -Math.cos(a) * sp * dt, -Math.sin(a) * sp * dt, d.fly); e.moving = true; }
-    if (e.cd <= 0 && dp < 240) { e.cd = rr(1.6, 2.4); shoot(e, a, d.proj, d.proj === 'orb' ? 140 : 190); e.swing = 0.3; audio.throw(); }
+    if (e.cd <= 0 && dp < 240) { e.cd = rr(1.6, 2.4); shoot(e, a, d.proj, d.proj === 'orb' || d.proj === 'fire' ? 140 : 190); e.swing = 0.3; audio.throw(); }
     return;
   }
   const reach = e.r + p.r + 8;
   if (d.ai === 'boss' && e.cd <= 0 && dp < 260) {
     let mv = d.moves[e.moveI % d.moves.length]; e.moveI++;
     if (mv === 'summon' && (e.sumCd > 0 || enemies.filter(o => o.summoned && o.hp > 0).length >= 3)) mv = d.moves.find(m => m !== 'summon');
-    e.move = mv; e.cd = d.type === 'guardian' ? 2.2 : rr(2.4, 3.4);
+    e.move = mv; e.cd = d.look === 'guardian' ? 2.2 : rr(2.4, 3.4);
     if (e.hp < e.maxHp * 0.5) e.cd *= 0.75;
     if (mv === 'spin') { e.tele = 0.75; teles.push({ kind: 'circle', x: e.x, y: e.y, r: 78, t: 0.75, max: 0.75, follow: e }); }
     else if (mv === 'pounce' || mv === 'charge') { e.tele = mv === 'pounce' ? 0.55 : 0.8; e.lockA = a; teles.push({ kind: 'line', x: e.x, y: e.y, a, len: mv === 'pounce' ? 190 : 230, w: e.r * 2, t: e.tele, max: e.tele, follow: e }); }
@@ -157,16 +163,17 @@ function executeMove(e) {
     const s = mv === 'pounce' ? 420 : 300; e.dash = mv === 'pounce' ? 0.45 : 0.75; e.dvx = Math.cos(e.lockA) * s; e.dvy = Math.sin(e.lockA) * s; audio.dash();
   } else if (mv === 'knives') {
     const a = Math.atan2(p.y - e.y, p.x - e.x);
-    for (let i = -2; i <= 2; i++) shoot(e, a + i * 0.22, d.look === 'guardian' ? 'orb' : 'knife', 210);
+    for (let i = -2; i <= 2; i++) shoot(e, a + i * 0.22, d.orbs === 'fire' ? 'fire' : d.orbs || d.look === 'guardian' ? 'orb' : d.look === 'golem' ? 'rock' : 'knife', 210);
     audio.throw();
   } else if (mv === 'ring') {
     const off = Math.random();
-    for (let i = 0; i < 14; i++) shoot(e, off + i / 14 * 6.283, 'orb', 130);
-    setTimeout(() => { if (e.hp > 0) for (let i = 0; i < 14; i++) shoot(e, off + (i + 0.5) / 14 * 6.283, 'orb', 110); }, 500);
+    const k = d.orbs === 'fire' ? 'fire' : 'orb';
+    for (let i = 0; i < 14; i++) shoot(e, off + i / 14 * 6.283, k, 130);
+    setTimeout(() => { if (e.hp > 0) for (let i = 0; i < 14; i++) shoot(e, off + (i + 0.5) / 14 * 6.283, k, 110); }, 500);
     audio.throw();
   } else if (mv === 'summon') {
     e.sumCd = 10;
-    for (let i = 0; i < 2; i++) { const a = rr(0, 6.28); let x = e.x + Math.cos(a) * 50, y = e.y + Math.sin(a) * 50; if (!canWalk(x, y, 12, d.summon === 'wisp')) { x = e.x; y = e.y; } const m = spawnEnemy(d.summon, x, y); m.summoned = true; m.aggro = true; m.hx = e.hx; m.hy = e.hy; for (let j = 0; j < 10; j++) parts.push({ x, y, vx: rr(-50, 50), vy: rr(-80, 0), life: 0.6, col: '#b388ff', sz: 3 }); }
+    for (let i = 0; i < 2; i++) { const a = rr(0, 6.28); let x = e.x + Math.cos(a) * 50, y = e.y + Math.sin(a) * 50; if (!canWalk(x, y, 12, EDEF[d.summon].fly)) { x = e.x; y = e.y; } const m = spawnEnemy(d.summon, x, y); m.summoned = true; m.aggro = true; m.hx = e.hx; m.hy = e.hy; for (let j = 0; j < 10; j++) parts.push({ x, y, vx: rr(-50, 50), vy: rr(-80, 0), life: 0.6, col: '#b388ff', sz: 3 }); }
   }
 }
 

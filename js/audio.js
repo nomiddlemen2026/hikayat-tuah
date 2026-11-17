@@ -30,7 +30,7 @@ const audio = {
     const c = this.ctx;
     const scale = [293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
     const reg = player ? regionAt(Math.floor(player.x / TS), Math.floor(player.y / TS)) : 'town';
-    const dark = reg === 'swamp' || reg === 'temple';
+    const dark = !!regionDef(reg).dark;
     const bpm = bossBar ? 0.18 : 0.26;
     while (this.musicT < c.currentTime + 0.5) {
       const st = this.step++, when = this.musicT - c.currentTime;

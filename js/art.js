@@ -56,6 +56,19 @@ function tileSprite(t, v) {
         g.fillStyle = '#6f6f73'; g.beginPath(); g.moveTo(3, 26); g.lineTo(7, 8); g.lineTo(18, 3); g.lineTo(28, 10); g.lineTo(30, 26); g.closePath(); g.fill();
         g.fillStyle = '#8e8e94'; g.beginPath(); g.moveTo(8, 10); g.lineTo(18, 5); g.lineTo(20, 16); g.lineTo(9, 20); g.closePath(); g.fill();
         g.fillStyle = '#e8eef2'; if (v === 1) { g.beginPath(); g.moveTo(14, 5); g.lineTo(18, 3); g.lineTo(22, 6); g.closePath(); g.fill(); } break;
+      case T.ASH: speckle(g, '#5a514c', ['#6a605a', '#4a423e', '#7a5a48'], 26, s); if (v === 2) { g.fillStyle = '#ff7a1a'; g.fillRect(9, 20, 2, 2); } break;
+      case T.LAVA: g.fillStyle = '#e65100'; g.fillRect(0, 0, TS, TS); g.fillStyle = '#ff9100';
+        for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(hash(i, s, 3) * TS, hash(s, i, 4) * TS, 6, 3, i, 0, 7); g.fill(); }
+        g.fillStyle = '#ffd740'; for (let i = 0; i < 4; i++) g.fillRect(hash(i, s, 8) * 28, hash(s, i, 9) * 28, 3, 2); break;
+      case T.MARBLE: g.fillStyle = '#e9e4f2'; g.fillRect(0, 0, TS, TS); g.fillStyle = '#d6cfe6'; g.fillRect(0, 15, TS, 2); g.fillRect(15, 0, 2, TS);
+        g.strokeStyle = 'rgba(150,130,190,.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(2 + v * 4, 3); g.quadraticCurveTo(10, 9, 6 + v * 3, 13); g.stroke(); break;
+      case T.MOSS: speckle(g, '#3f8f86', ['#4fa59a', '#357a73', '#6cc0b0'], 26, s); break;
+      case T.PADDY: g.fillStyle = '#5f9a4a'; g.fillRect(0, 0, TS, TS); g.fillStyle = 'rgba(80,150,190,.45)'; g.fillRect(0, 0, TS, TS);
+        g.fillStyle = '#8fd25a'; for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) g.fillRect(3 + k * 8 + (r % 2) * 2, 2 + r * 8, 2, 5); break;
+      case T.CRYSTAL: speckle(g, '#3f8f86', ['#4fa59a', '#357a73'], 16, s);
+        g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(16, 27, 11, 4, 0, 0, 7); g.fill();
+        g.fillStyle = v === 2 ? '#c9a7ff' : '#7fe3f5'; g.beginPath(); g.moveTo(12, 28); g.lineTo(16, 2); g.lineTo(20, 28); g.fill(); g.beginPath(); g.moveTo(5, 28); g.lineTo(9, 12); g.lineTo(13, 28); g.fill(); g.beginPath(); g.moveTo(19, 28); g.lineTo(24, 14); g.lineTo(27, 28); g.fill();
+        g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(15, 6, 1, 18); break;
     }
   });
   tileCache[key] = c;
@@ -81,23 +94,37 @@ const HEROES = {
 };
 function drawWeapon(g, wid, len) {
   // drawn pointing to +x from hand
-  if (wid === 'fist' || !wid) return;
-  if (wid === 'lembing') {
+  const w = WEAPONS[wid];
+  if (!w || w.type === 'fist') return;
+  const blade = w.blade || '#cfd8dc';
+  if (w.glow) { g.shadowColor = w.glow; g.shadowBlur = 8; }
+  if (w.type === 'spear') {
     g.fillStyle = '#7a5230'; g.fillRect(-6, -1.2, len + 6, 2.4);
-    g.fillStyle = '#cfd8dc'; g.beginPath(); g.moveTo(len, -3.5); g.lineTo(len + 9, 0); g.lineTo(len, 3.5); g.fill();
-    g.fillStyle = '#c62828'; g.fillRect(len - 3, -2.5, 3, 5); return;
+    g.fillStyle = blade; g.beginPath(); g.moveTo(len, -3.5); g.lineTo(len + 9, 0); g.lineTo(len, 3.5); g.fill();
+    g.fillStyle = w.tassel || '#c62828'; g.fillRect(len - 3, -2.5, 3, 5); g.shadowBlur = 0; return;
   }
-  const blade = wid === 'parang' ? '#b0bec5' : wid === 'taming' ? '#ffe082' : '#cfd8dc';
+  if (w.type === 'bow') {
+    g.strokeStyle = w.wood; g.lineWidth = 2.6; g.beginPath(); g.arc(len * 0.1, 0, len * 0.65, -1.25, 1.25); g.stroke();
+    g.strokeStyle = '#eee'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(len * 0.1 + Math.cos(-1.25) * len * 0.65, Math.sin(-1.25) * len * 0.65); g.lineTo(len * 0.1 + Math.cos(1.25) * len * 0.65, Math.sin(1.25) * len * 0.65); g.stroke();
+    g.fillStyle = '#3e2723'; g.fillRect(len * 0.72, -2, 3, 4); g.shadowBlur = 0; return;
+  }
+  if (w.type === 'club') {
+    g.fillStyle = '#5d4037'; g.fillRect(-2, -1.5, len - 4, 3);
+    g.fillStyle = blade; g.fillRect(len - 6, -4.5, 9, 9); g.fillStyle = '#cfd8dc'; g.fillRect(len - 3, -6.5, 2, 2); g.fillRect(len - 3, 4.5, 2, 2); g.fillRect(len + 3, -1, 2, 2); g.shadowBlur = 0; return;
+  }
   g.fillStyle = '#5d3a1a'; g.fillRect(-2, -2, 6, 4);           // hilt
-  g.fillStyle = '#d4a82a'; g.fillRect(3, -3.5, 2, 7);          // guard
+  g.fillStyle = w.glow ? '#ffd54f' : '#d4a82a'; g.fillRect(3, -3.5, 2, 7); // guard
   g.fillStyle = blade; g.beginPath();
   if (wid === 'parang') { g.moveTo(5, -2); g.lineTo(len, -4); g.lineTo(len + 2, 1); g.lineTo(5, 3); }
+  else if (w.type === 'blade') { g.moveTo(5, -2.5); g.lineTo(len + 1, -2.5); g.lineTo(len + 5, 0); g.lineTo(len + 1, 2.5); g.lineTo(5, 2.5); }
+  else if (w.type === 'curved') { g.moveTo(5, -1.5); g.quadraticCurveTo(len * 0.7, -2, len - 1, 4); g.lineTo(len - 3, 4); g.quadraticCurveTo(len * 0.55, 1, 5, 2); }
   else { // keris: wavy blade
     g.moveTo(5, -2.2); for (let i = 1; i <= 5; i++) g.lineTo(5 + i * (len - 5) / 5, (i % 2 ? -3.2 : -1.2)); g.lineTo(len + 3, 0);
     for (let i = 5; i >= 1; i--) g.lineTo(5 + i * (len - 5) / 5, (i % 2 ? 1.2 : 3.2)); g.lineTo(5, 2.2);
   }
   g.closePath(); g.fill();
-  if (wid === 'taming') { g.shadowColor = '#ffd54f'; g.shadowBlur = 10; g.strokeStyle = 'rgba(255,240,180,.8)'; g.lineWidth = 1; g.stroke(); g.shadowBlur = 0; }
+  if (w.glow) { g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.stroke(); }
+  g.shadowBlur = 0;
 }
 function drawHero(g, x, y, h, face, walk, wid, atk, opts = {}) {
   g.save(); g.translate(x, y);
@@ -111,8 +138,9 @@ function drawHero(g, x, y, h, face, walk, wid, atk, opts = {}) {
   g.fillStyle = h.skin; g.fillRect(-5, 10 + l * 0.3, 4, 2); g.fillRect(1, 10 - l * 0.3, 4, 2);
   // weapon behind if facing up
   const wAng = face + (atk > 0 ? lerp(-1.4, 1.4, 1 - atk) : 0.5);
-  const wl = wid === 'lembing' ? 20 + (atk > 0 ? 10 * Math.sin((1 - atk) * Math.PI) : 0) : (wid === 'parang' ? 15 : 14);
-  const drawW = () => { if (!wid || wid === 'fist') return; g.save(); g.translate(fx * 6, -2 + bob + fy * 3); g.rotate(wid === 'lembing' ? face : wAng); drawWeapon(g, wid, wl); g.restore(); };
+  const wt = wid && WEAPONS[wid] ? WEAPONS[wid].type : '';
+  const wl = wt === 'spear' ? 20 + (atk > 0 ? 10 * Math.sin((1 - atk) * Math.PI) : 0) : wt === 'bow' ? 13 : (wid === 'parang' || wt === 'club' ? 15 : 14);
+  const drawW = () => { if (!wid || wid === 'fist') return; g.save(); g.translate(fx * 6, -2 + bob + fy * 3); g.rotate(wt === 'spear' || wt === 'bow' ? face : wAng); drawWeapon(g, wid, wl); g.restore(); };
   if (fy < -0.3) drawW();
   // body / baju
   g.translate(0, bob);
@@ -143,14 +171,11 @@ function drawHero(g, x, y, h, face, walk, wid, atk, opts = {}) {
   if (opts.flash) { g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(-14, -30, 28, 44); }
   g.restore();
 }
-function drawNPC(g, x, y, kind, t) {
-  if (kind === 'bendahara') drawHero(g, x, y, { baju: '#f5f0e1', sampin: '#6d4c41', tanjak: '#c9a227', trim: '#c9a227', skin: '#c08a5c' }, Math.PI / 2, t, null, 0);
-  else if (kind === 'villager1') drawHero(g, x, y, { baju: '#8d6e63', sampin: '#a1887f', tanjak: '#5d4037', trim: '#d7ccc8', skin: '#c68b59' }, Math.PI / 2, t, null, 0);
-  else if (kind === 'villager2') { drawHero(g, x, y, { baju: '#ec407a', sampin: '#7b1fa2', tanjak: '#ec407a', trim: '#f8bbd0', skin: '#d29a6a' }, Math.PI / 2, t, null, 0); }
-  else if (kind === 'smith') drawHero(g, x, y, { baju: '#455a64', sampin: '#ff7043', tanjak: '#263238', trim: '#ffab91', skin: '#b97f50' }, Math.PI / 2, t, 'parang', 0);
+function drawNPC(g, x, y, kind, t, n) {
+  drawHero(g, x, y, (n && n.pal) || NPC_PALS['Pak Mat'], Math.PI / 2, t, n && n.weapon, 0);
 }
 function drawEnemy(g, e, t) {
-  const d = e.def, s = d.boss ? 1.6 : 1, x = e.x, y = e.y;
+  const d = e.def, s = (d.scale || (d.boss ? 1.5 : 1)) * 1.07, x = e.x, y = e.y, col = d.col || {};
   const flash = e.hurt > 0;
   g.save(); g.translate(x, y);
   if (e.tele > 0) { g.globalAlpha = 0.6 + 0.4 * Math.sin(t * 40); }
@@ -166,22 +191,22 @@ function drawEnemy(g, e, t) {
   g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(0, 10, d.r * 0.95, 4, 0, 0, 7); g.fill();
   if (k === 'boar') {
     g.fillStyle = '#3e2a1a'; g.fillRect(-8, 4 + step, 3, 6); g.fillRect(5, 4 - step, 3, 6);
-    g.fillStyle = '#6b4a2f'; g.beginPath(); g.ellipse(0, 0, 13, 9, 0, 0, 7); g.fill();
+    g.fillStyle = col.body || '#6b4a2f'; g.beginPath(); g.ellipse(0, 0, 13, 9, 0, 0, 7); g.fill();
     g.fillStyle = '#4e3420'; for (let i = -6; i <= 6; i += 3) g.fillRect(i, -9, 2, 4);
     g.fillStyle = '#7d5a3c'; g.beginPath(); g.ellipse(dirx * 11, 1, 6, 5, 0, 0, 7); g.fill();
     g.fillStyle = '#f5f5dc'; g.fillRect(dirx * 15 - 1, 2, 2, 4); g.fillStyle = '#000'; g.fillRect(dirx * 12, -2, 2, 2);
   } else if (k === 'tiger') {
-    const white = d.boss;
-    g.fillStyle = white ? '#e0e0e0' : '#e07b1a'; g.fillRect(-10, 4 + step, 4, 7); g.fillRect(7, 4 - step, 4, 7);
+    const white = d.boss && !col.fur;
+    g.fillStyle = col.fur || (white ? '#e0e0e0' : '#e07b1a'); g.fillRect(-10, 4 + step, 4, 7); g.fillRect(7, 4 - step, 4, 7);
     g.beginPath(); g.ellipse(0, 0, 15, 9, 0, 0, 7); g.fill();
     g.fillStyle = '#1a1a1a'; for (let i = -9; i <= 7; i += 4) g.fillRect(i, -8, 2, 7);
-    g.fillStyle = white ? '#f5f5f5' : '#f08c2e'; g.beginPath(); g.arc(dirx * 13, -3, 7, 0, 7); g.fill();
+    g.fillStyle = col.fur || (white ? '#f5f5f5' : '#f08c2e'); g.beginPath(); g.arc(dirx * 13, -3, 7, 0, 7); g.fill();
     g.fillStyle = '#fff'; g.beginPath(); g.arc(dirx * 15, 0, 3.5, 0, 7); g.fill();
     g.fillStyle = '#1a1a1a'; g.fillRect(dirx * 14 - 1, -6, 2, 2); g.fillRect(dirx * 11 - 1, -10, 3, 3);
     g.strokeStyle = white ? '#e0e0e0' : '#e07b1a'; g.lineWidth = 3; g.beginPath(); g.moveTo(-dirx * 14, -2); g.quadraticCurveTo(-dirx * 22, -10, -dirx * 19, -16); g.stroke();
     if (white) { g.fillStyle = '#1a1a1a'; g.fillRect(dirx * 9, -9, 2, 5); }
   } else if (k === 'croc') {
-    g.fillStyle = d.boss ? '#3d5a1e' : '#4a6b2a';
+    g.fillStyle = col.skin || (d.boss ? '#3d5a1e' : '#4a6b2a');
     g.beginPath(); g.ellipse(0, 0, 16, 7, 0, 0, 7); g.fill();
     g.beginPath(); g.moveTo(dirx * 12, -4); g.lineTo(dirx * 26, -2); g.lineTo(dirx * 26, 3); g.lineTo(dirx * 12, 5); g.fill();
     g.beginPath(); g.moveTo(-dirx * 14, -3); g.lineTo(-dirx * 28, 0 + step); g.lineTo(-dirx * 14, 4); g.fill();
@@ -193,16 +218,20 @@ function drawEnemy(g, e, t) {
   } else if (k === 'wisp') {
     const p = Math.sin((t + e.seed) * 6);
     g.globalCompositeOperation = 'lighter';
-    const gr = g.createRadialGradient(0, -6, 1, 0, -6, 14); gr.addColorStop(0, d.boss ? '#fff8e1' : '#e0fff4'); gr.addColorStop(0.4, d.boss ? 'rgba(255,193,7,.8)' : 'rgba(64,255,170,.7)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    const gr = g.createRadialGradient(0, -6, 1, 0, -6, 14); gr.addColorStop(0, col.core || (d.boss ? '#fff8e1' : '#e0fff4')); gr.addColorStop(0.4, col.shell || (d.boss ? 'rgba(255,193,7,.8)' : 'rgba(64,255,170,.7)')); gr.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = gr; g.beginPath(); g.arc(0, -6 + p * 2, 14, 0, 7); g.fill();
     g.globalCompositeOperation = 'source-over'; g.fillStyle = '#063'; g.fillRect(-3, -8 + p * 2, 2, 3); g.fillRect(2, -8 + p * 2, 2, 3);
   } else if (k === 'golem') {
     g.fillStyle = '#5f5b54'; g.fillRect(-9, 4 + step, 6, 8); g.fillRect(3, 4 - step, 6, 8);
-    g.fillStyle = '#7a756c'; g.fillRect(-11, -10, 22, 16); g.fillStyle = '#8f897e'; g.fillRect(-7, -20, 14, 11);
+    g.fillStyle = col.body || '#7a756c'; g.fillRect(-11, -10, 22, 16); g.fillStyle = col.head || '#8f897e'; g.fillRect(-7, -20, 14, 11);
     g.fillStyle = '#6a655c'; g.fillRect(-16, -8, 5, 12); g.fillRect(11, -8, 5, 12);
     g.fillStyle = '#4e7a3e'; g.fillRect(-10, -10, 6, 2);
     g.fillStyle = '#40e0ff'; g.fillRect(-4, -16, 3, 3); g.fillRect(2, -16, 3, 3); g.fillRect(-1, -4, 2, 4);
+  } else if (k === 'snake') {
+    for (let i = 8; i >= 0; i--) { const sx = -dirx * i * 5, sy = Math.sin((t + e.seed) * 6 - i * 0.8) * 3; g.fillStyle = i % 2 ? col.skin : col.belly; g.beginPath(); g.arc(sx, sy, 7 - i * 0.5, 0, 7); g.fill(); }
+    g.fillStyle = col.skin; g.beginPath(); g.ellipse(dirx * 8, -4, 8, 6, 0, 0, 7); g.fill(); g.fillStyle = '#ffeb3b'; g.fillRect(dirx * 10, -7, 2, 2);
   } else if (k === 'guardian') {
+    if (col.robe) g.filter = 'brightness(0.45) hue-rotate(220deg)';
     const p = Math.sin(t * 3) * 3;
     g.translate(0, p - 6);
     g.fillStyle = 'rgba(255,200,60,.25)'; g.beginPath(); g.arc(0, -4, 22, 0, 7); g.fill();
