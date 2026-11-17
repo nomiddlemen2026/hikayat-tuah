@@ -385,7 +385,7 @@ const gfx = (() => {
   api.init = function () {
     try {
       glCanvas = document.createElement('canvas'); glCanvas.id = 'gl';
-      document.body.insertBefore(glCanvas, document.body.firstChild);
+      const stage = document.getElementById('stage') || document.body; stage.insertBefore(glCanvas, stage.firstChild);
       renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: !isTouch, powerPreference: 'high-performance' });
     } catch (e) { console.warn('WebGL not available, using classic 2D view', e); if (glCanvas) glCanvas.remove(); return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.25 : 1.5));

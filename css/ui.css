@@ -6,7 +6,8 @@
 }
 html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 canvas#c { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
-body.rot { position: fixed; left: 0; top: 0; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
+#stage { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; }
+#stage.rot { transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
 canvas#gl { display: block; position: fixed; inset: 0; }
 #ui { position: fixed; inset: 0; pointer-events: none; font: 11px/1.35 var(--font); color: var(--ink); }
 #ui button { font: inherit; cursor: pointer; }
@@ -194,8 +195,45 @@ table.keys td { padding: 3px 5px; border-bottom: 1px solid #eee5cf; }
 #ui.tiny #w-status .money, #ui.tiny #w-status .party { display: none; }
 #ui.tiny #w-mini { width: 96px; }
 #ui.tiny #tracker { width: 120px; }
-#ui.compact .win.min .bd { display: none; }
+#ui.compact .win.min .bd, #ui.touch .win.min .bd { display: none; }
 #ui.compact .win.min .tb { cursor: pointer; }
 #ui.compact #w-status .tb, #ui.compact #w-mini .tb { cursor: pointer; }
 /* place the chat log under the status window in compact mode */
 #ui.compact #w-chat { top: calc(6px + var(--status-h, 150px) + 4px); }
+/* phones: the chat log never blocks the movement joystick */
+#ui.touch #w-chat, #ui.touch #w-chat * { pointer-events: none; }
+#ui.touch #chatform { display: none; }
+#ui.touch #w-chat { background: rgba(20,26,40,.5); }
+#ui.touch #chatlog { height: 70px; }
+
+/* ---------- phones and tablets: PC layout, readable sizes (text 12px+, buttons 40px+) ---------- */
+#ui.touch { font-size: 12.5px; }
+#ui.touch .win .tb { height: 24px; font-size: 13px; }
+#ui.touch #w-status { width: 232px; left: 6px; top: 6px; }
+#ui.touch #w-status .bd { padding: 5px 6px; }
+#ui.touch #w-status .portrait { width: 34px; height: 34px; }
+#ui.touch #w-status .name { font-size: 14px; }
+#ui.touch #w-status .lv, #ui.touch #w-status .money, #ui.touch #w-status .party { display: none; }
+#ui.touch #w-status .bar { height: 15px; }
+#ui.touch #w-status .bar span { font-size: 11px; line-height: 15px; }
+#ui.touch #w-status .bar.thin { height: 7px; }
+#ui.touch #w-status .bar.thin span { display: none; }
+#ui.touch #w-status .menu { gap: 3px; }
+#ui.touch #w-status .menu button { height: 30px; font-size: 12px; padding: 0 4px; }
+#ui.touch #w-mini { width: 150px; right: 6px; top: 6px; }
+#ui.touch #tracker { width: 150px; right: 6px; font-size: 12px; padding: 4px 6px; }
+#ui.touch #tracker span { display: none; }
+#ui.touch #w-chat { left: 6px; bottom: 6px; top: auto; width: 208px; }
+#ui.touch #w-chat .tb { display: none; }
+#ui.touch #chatlog { height: 50px; font-size: 11.5px; overflow: hidden; }
+#ui.touch #hotbar { bottom: 4px; padding: 2px; }
+#ui.touch .hk { width: 42px; height: 42px; }
+#ui.touch .hk img { width: 36px; height: 36px; }
+#ui.touch .hk small { font-size: 9px; }
+#ui.touch .win.float.sheet { font-size: 13px; }
+#ui.touch .win.float .tb .x { width: 40px; height: 24px; font-size: 20px; }
+#ui.touch .win button:not(.x):not(.plus) { min-height: 32px; }
+#ui.touch .plus { width: 34px; height: 28px; font-size: 16px; }
+#ui.touch #w-dialog { bottom: 8px; width: min(600px, calc(var(--gw, 100vw) * 0.9)); }
+#ui.touch .dtext { font-size: 14px; }
+#ui.touch #d-port { width: 64px; height: 64px; }

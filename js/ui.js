@@ -47,7 +47,22 @@ const ui = (() => {
   const prevMap = new WeakMap();
   const set = (el, prop, v) => { let m = prevMap.get(el); if (!m) prevMap.set(el, m = {}); if (m[prop] === v) return; m[prop] = v; if (prop === 'text') el.textContent = v; else if (prop === 'html') el.innerHTML = v; else if (prop === 'src') el.src = v; else el.style[prop] = v; };
   const $ = id => document.getElementById(id);
-  const compact = () => isTouch || H < 520 || W < 760;
+  // Phones use the full PC layout, shrunk to fit: the UI is laid out on a virtual screen UW x UH and scaled by uiS.
+  const compact = () => !isTouch && (H < 520 || W < 760);
+  let uiS = 1, UW = W, UH = H, lastLay = '';
+  function layout() {
+    const key = W + 'x' + H + ':' + isTouch + ':' + SAFE.l + ',' + SAFE.r + ',' + SAFE.t + ',' + SAFE.b;
+    if (key === lastLay) return; lastLay = key;
+    const aw = W - SAFE.l - SAFE.r, ah = H - SAFE.t - SAFE.b;
+    uiS = isTouch ? Math.max(1, Math.min(1.35, ah / 380)) : 1; // phones: never shrink, grow on big tablets
+    UW = aw / uiS; UH = ah / uiS;
+    const st = root.style;
+    st.left = SAFE.l + 'px'; st.top = SAFE.t + 'px'; st.right = 'auto'; st.bottom = 'auto';
+    st.width = UW + 'px'; st.height = UH + 'px';
+    st.transformOrigin = '0 0'; st.transform = uiS === 1 ? '' : 'scale(' + uiS + ')';
+    st.setProperty('--gw', UW + 'px'); st.setProperty('--gh', UH + 'px');
+    for (const w of Object.values(wins)) if (w.float && w.open) place(w);
+  }
 
   function makeWin(id, title, opts = {}) {
     const w = document.createElement('div');
@@ -61,10 +76,10 @@ const ui = (() => {
     // drag by title bar
     const tb = w.querySelector('.tb');
     // tap the title bar of a HUD window on phones to minimise it to a slim bar (Ragnarok style)
-    if (!opts.float) tb.addEventListener('click', e => { if (compact() && !e.target.closest('button')) { w.classList.toggle('min'); try { localStorage.setItem('hikayat_tuah_min_' + id, w.classList.contains('min') ? '1' : '0'); } catch (er) { } } });
+    if (!opts.float) tb.addEventListener('click', e => { if ((compact() || isTouch) && !e.target.closest('button')) { w.classList.toggle('min'); try { localStorage.setItem('hikayat_tuah_min_' + id, w.classList.contains('min') ? '1' : '0'); } catch (er) { } } });
     try { if (!opts.float && localStorage.getItem('hikayat_tuah_min_' + id) === '1') w.classList.add('min'); } catch (er) { }
     tb.addEventListener('pointerdown', e => {
-      if (e.target.closest('button') || compact()) return;
+      if (e.target.closest('button') || compact() || isTouch) return;
       e.preventDefault(); front(win);
       const r = w.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
       const mv = ev => { w.style.left = clamp(ev.clientX - ox, 0, window.innerWidth - 60) + 'px'; w.style.top = clamp(ev.clientY - oy, 0, window.innerHeight - 24) + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; };
@@ -78,21 +93,21 @@ const ui = (() => {
   function front(win) { win.el.style.zIndex = ++z; }
   function place(win) {
     const w = win.el;
-    if (compact()) { w.classList.add('sheet'); w.style.left = w.style.top = ''; return; }
+    if (compact() || isTouch) { w.classList.add('sheet'); w.style.left = w.style.top = ''; return; }
     w.classList.remove('sheet');
     const p = savedPos[win.id];
     if (p) { w.style.left = p[0]; w.style.top = p[1]; }
     else {
       // sensible default spots so several windows can be open side by side
-      const d = { stats: [250, 64], items: [W - 490, 64], equip: [250, 324], skills: [W - 510, 330], quests: [W / 2 - 170, 110], map: [W / 2 - 198, 80], options: [W / 2 - 180, H / 2 - 150] }[win.id] || [W / 2 - 170, 100];
+      const d = { stats: [250, 64], items: [UW - 490, 64], equip: [250, 324], skills: [UW - 510, 330], quests: [UW / 2 - 170, 110], map: [UW / 2 - 198, 80], options: [UW / 2 - 180, UH / 2 - 150] }[win.id] || [UW / 2 - 170, 100];
       w.style.left = Math.max(8, d[0]) + 'px'; w.style.top = Math.max(8, d[1]) + 'px';
     }
     // keep on screen
-    requestAnimationFrame(() => { const r = w.getBoundingClientRect(); if (r.right > W) w.style.left = Math.max(0, W - r.width - 8) + 'px'; if (r.bottom > H) w.style.top = Math.max(0, H - r.height - 8) + 'px'; });
+    requestAnimationFrame(() => { if (w.offsetLeft + w.offsetWidth > UW) w.style.left = Math.max(0, UW - w.offsetWidth - 8) + 'px'; if (w.offsetTop + w.offsetHeight > UH) w.style.top = Math.max(0, UH - w.offsetHeight - 8) + 'px'; });
   }
   function open(id) {
     const win = wins[id]; if (!win || state === 'title') return;
-    if (compact()) for (const o of Object.values(wins)) if (o.float && o.open && o !== win) close(o.id);
+    if (compact() || isTouch) for (const o of Object.values(wins)) if (o.float && o.open && o !== win) close(o.id);
     win.open = true; win.el.style.display = ''; win.last = ''; place(win); refresh(win); front(win);
     if (id === 'options' && state === 'play') state = 'menu';
     audio.tone && audio.tone(880, 0.04, 'sine', 0.05);
@@ -279,12 +294,13 @@ const ui = (() => {
     if (state === 'title') return;
     frameN++;
     const p = player;
+    layout();
     root.classList.toggle('compact', compact());
     root.classList.toggle('tiny', compact() && H < 440);
     if (wins.status.el.classList.contains('min')) set(wins.status.el.querySelector('.tt'), 'text', 'HP ' + Math.ceil(p.hp) + '/' + maxHp() + '  SP ' + Math.floor(p.sp) + '/' + maxSp());
     else set(wins.status.el.querySelector('.tt'), 'text', 'Basic Info');
     root.classList.toggle('touch', isTouch);
-    if (frameN % 20 === 1) { root.style.setProperty('--status-h', wins.status.el.offsetHeight + 'px'); const mr = wins.mini.el.getBoundingClientRect(); $('tracker').style.top = (mr.bottom + 4) + 'px'; }
+    if (frameN % 20 === 1) { root.style.setProperty('--status-h', wins.status.el.offsetHeight + 'px'); const mr = wins.mini.el.getBoundingClientRect(); $('tracker').style.top = (wins.mini.el.offsetTop + wins.mini.el.offsetHeight + 4) + 'px'; }
     const hp = Math.ceil(p.hp), mh = maxHp(), sp = Math.floor(p.sp), ms = maxSp();
     set($('s-hp'), 'width', (hp / mh * 100).toFixed(1) + '%'); set($('s-hpt'), 'text', hp + ' / ' + mh);
     $('s-hpb').classList.toggle('low', hp / mh < 0.25);

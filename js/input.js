@@ -46,7 +46,7 @@ function useHotkey(i) {
 function buttons() {
   if (!isTouch) return [];
   const s = UIS, m = 18 * s;
-  const A = { id: 'attack', x: W - m - 46 * s, y: H - m - 46 * s, r: 40 * s };
+  const A = { id: 'attack', x: W - m - SAFE.r - 46 * s, y: H - m - SAFE.b - 46 * s, r: 40 * s };
   const S = { id: 'skill', x: A.x - 86 * s, y: A.y + 14 * s, r: 27 * s };
   const P = { id: 'potion', x: A.x - 2 * s, y: A.y - 84 * s, r: 23 * s };
   const out = [A, S, P];
