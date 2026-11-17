@@ -58,7 +58,7 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault(); audio.init();
   if (typing()) document.activeElement.blur();
   if (e.pointerType === 'touch') isTouch = true;
-  const x = e.clientX, y = e.clientY;
+  const { x, y } = toGame(e);
   pointers[e.pointerId] = { x, y, btn: null };
   if (state === 'title') { const b = titleButtons(); for (const t of b) if (x > t.x && x < t.x + t.w && y > t.y && y < t.y + t.h) { startGame(t.fresh); return; } return; }
   if (state === 'dialog') { advanceDialog(); return; }
@@ -86,7 +86,8 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   e.preventDefault();
-  if (e.pointerId === joy.id) { joy.x = e.clientX; joy.y = e.clientY; }
+  const g = toGame(e);
+  if (e.pointerId === joy.id) { joy.x = g.x; joy.y = g.y; }
   const p = pointers[e.pointerId];
   if (p && p.btn === 'rot') { gfx.rotate((e.clientX - p.lx) * 0.008); gfx.pitchBy((e.clientY - p.ly) * 0.004); p.lx = e.clientX; p.ly = e.clientY; }
 });

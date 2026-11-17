@@ -11,9 +11,20 @@ const TS = 32, MW = 96, MH = 72;
 let W = 0, H = 0, DPR = 1, ZOOM = 1, UIS = 1;
 const DEBUG = /debug=1/.test(location.search);
 
+// On phones held upright the whole game is turned 90 degrees (landscape, like most mobile games).
+// The body is rotated with CSS, W/H are the landscape size and touches are remapped by toGame().
+const TOUCH_DEV = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+let ROT = false;
+const toGame = e => ROT ? { x: e.clientY, y: window.innerWidth - e.clientX } : { x: e.clientX, y: e.clientY };
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
+  const iw = window.innerWidth, ih = window.innerHeight;
+  ROT = TOUCH_DEV && ih > iw * 1.05;
+  const bs = document.body.style;
+  document.body.classList.toggle('rot', ROT);
+  bs.width = ROT ? ih + 'px' : ''; bs.height = ROT ? iw + 'px' : '';
+  W = ROT ? ih : iw; H = ROT ? iw : ih;
+  document.documentElement.style.setProperty('--gw', W + 'px'); document.documentElement.style.setProperty('--gh', H + 'px');
   cv.width = Math.floor(W * DPR); cv.height = Math.floor(H * DPR);
   ZOOM = Math.max(0.85, Math.min(H / (TS * 11.5), 3));
   UIS = Math.max(0.75, Math.min(Math.min(W, H) / 380, 2.2));
