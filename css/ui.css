@@ -187,5 +187,15 @@ table.keys td { padding: 3px 5px; border-bottom: 1px solid #eee5cf; }
 #ui.touch .win.float .tb .x { width: 26px; height: 20px; font-size: 16px; }
 #ui.touch .win button:not(.x):not(.plus) { padding: 6px 10px; }
 #ui.touch .plus { width: 24px; height: 20px; }
+/* very small screens (phones in landscape): slimmer HUD */
+#ui.tiny #w-status { width: 168px; }
+#ui.tiny #w-status .portrait, #ui.tiny #w-status .lv, #ui.tiny #w-status .job { display: none; }
+#ui.tiny #w-status .bars label:nth-of-type(n+3), #ui.tiny #w-status .bars .bar.thin { display: none; }
+#ui.tiny #w-status .money, #ui.tiny #w-status .party { display: none; }
+#ui.tiny #w-mini { width: 96px; }
+#ui.tiny #tracker { width: 120px; }
+#ui.compact .win.min .bd { display: none; }
+#ui.compact .win.min .tb { cursor: pointer; }
+#ui.compact #w-status .tb, #ui.compact #w-mini .tb { cursor: pointer; }
 /* place the chat log under the status window in compact mode */
 #ui.compact #w-chat { top: calc(6px + var(--status-h, 150px) + 4px); }

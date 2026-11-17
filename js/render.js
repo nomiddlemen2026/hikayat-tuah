@@ -240,5 +240,6 @@ function renderTitle() {
   ctx.shadowBlur = 0;
   for (const b of titleButtons()) { ctx.fillStyle = 'rgba(30,15,5,.85)'; rrect(ctx, b.x, b.y, b.w, b.h, 8 * s); ctx.fill(); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 2; ctx.stroke(); txt(b.label, b.x + b.w / 2, b.y + b.h / 2 + 6 * s, 16 * s, '#ffe082', 'center'); }
   txt('An original game inspired by the legend of Hang Tuah', W / 2, H - 10 * s, 9 * s, 'rgba(255,255,255,.7)', 'center', false);
+  if (/Barcelona|Instagram|FBAN|FBAV|FB_IAB|Line\/|TikTok|musical_ly/i.test(navigator.userAgent)) txt('For fullscreen, tap the ⋮ menu and choose Open in browser', W / 2, H - 26 * s, 10 * s, '#ffe082', 'center');
 }
 

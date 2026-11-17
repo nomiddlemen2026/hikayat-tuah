@@ -60,6 +60,9 @@ const ui = (() => {
     if (opts.float) w.style.display = 'none';
     // drag by title bar
     const tb = w.querySelector('.tb');
+    // tap the title bar of a HUD window on phones to minimise it to a slim bar (Ragnarok style)
+    if (!opts.float) tb.addEventListener('click', e => { if (compact() && !e.target.closest('button')) { w.classList.toggle('min'); try { localStorage.setItem('hikayat_tuah_min_' + id, w.classList.contains('min') ? '1' : '0'); } catch (er) { } } });
+    try { if (!opts.float && localStorage.getItem('hikayat_tuah_min_' + id) === '1') w.classList.add('min'); } catch (er) { }
     tb.addEventListener('pointerdown', e => {
       if (e.target.closest('button') || compact()) return;
       e.preventDefault(); front(win);
@@ -277,6 +280,9 @@ const ui = (() => {
     frameN++;
     const p = player;
     root.classList.toggle('compact', compact());
+    root.classList.toggle('tiny', compact() && H < 440);
+    if (wins.status.el.classList.contains('min')) set(wins.status.el.querySelector('.tt'), 'text', 'HP ' + Math.ceil(p.hp) + '/' + maxHp() + '  SP ' + Math.floor(p.sp) + '/' + maxSp());
+    else set(wins.status.el.querySelector('.tt'), 'text', 'Basic Info');
     root.classList.toggle('touch', isTouch);
     if (frameN % 20 === 1) { root.style.setProperty('--status-h', wins.status.el.offsetHeight + 'px'); const mr = wins.mini.el.getBoundingClientRect(); $('tracker').style.top = (mr.bottom + 4) + 'px'; }
     const hp = Math.ceil(p.hp), mh = maxHp(), sp = Math.floor(p.sp), ms = maxSp();
