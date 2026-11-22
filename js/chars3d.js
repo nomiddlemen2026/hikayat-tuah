@@ -245,7 +245,7 @@ const chars3d = (() => {
       let tops = g.scene.children; while (tops.length === 1 && !tops[0].isMesh && !/_/.test(tops[0].name) && tops[0].children.length > 1) tops = tops[0].children;
       for (const top of tops) {
         const parts = [], inv = top.matrixWorld.clone().invert();
-        top.traverse(o => { if (!o.isMesh) return; const geo = toFloat(o.geometry); geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)); const m = o.material; m.side = THREE.DoubleSide; if (/MapleLeaves/.test(m.name) && m.map) greenify(m); parts.push({ geo, mat: m }); });
+        top.traverse(o => { if (!o.isMesh) return; const geo = toFloat(o.geometry); geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)); const m = o.material; m.side = THREE.DoubleSide; if (m.isMeshStandardMaterial) { m.__metal = m.metalness; m.metalness = 0; m.roughness = Math.max(m.roughness, 0.8); } if (/MapleLeaves/.test(m.name) && m.map) greenify(m); if (/^Rock/.test(top.name)) m.color.setRGB(1.15, 1.12, 1.06); parts.push({ geo, mat: m }); });
         nature[top.name] = parts;
       }
       natureReady = true; done && done(true);

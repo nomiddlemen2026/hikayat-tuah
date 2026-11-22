@@ -44,7 +44,7 @@ const FOE = {
 };
 const SHADOW_PAL = (trim, sampin) => ({ baju: '#1c1826', sampin: sampin || '#2e2640', tanjak: '#120e1c', trim: trim || '#7c4dff', skin: '#4a4060' });
 
-// ---------------------------------------------------------------- the states (batch 1: Melaka, Negeri Sembilan, Johor, Pahang)
+// ---------------------------------------------------------------- the states (batch 1: Melaka, Negeri Sembilan, Johor, Pahang; batch 2: Terengganu, Kelantan, Perlis, Kedah)
 const STATES = [
   {
     id: 'melaka', name: 'Melaka', town: 'Bandar Melaka', palace: 'Istana Kesultanan', style: null,
@@ -281,6 +281,238 @@ const STATES = [
       },
     ],
   },
+  {
+    id: 'terengganu', name: 'Terengganu', town: 'Kuala Terengganu', palace: 'Istana Maziah', style: 'kampung',
+    host: 'Tok Penghulu Losong', shopkeeper: 'Mak Wan', shop: ['jamu', 'badik', 'sumpit', 'kerisPanjang'], trim: '#ef5350',
+    areas: {
+      nw: { name: 'Hulu Terengganu', biome: 'jungle', landmark: 'shrine' },
+      n: { name: 'Bukit Puteri', biome: 'hill', landmark: 'fort' },
+      ne: { name: 'Pulau Redang', biome: 'beach' },
+      sw: { name: 'Tasik Kenyir', biome: 'lake', landmark: 'lake' },
+      se: { name: 'Pulau Duyong', biome: 'forest' },
+    },
+    chapters: [
+      {
+        title: 'The Stone of Kuala Berang', era: '1303', giver: 'Tok Penghulu Berang',
+        intro: [['', 'The mist sails up the Terengganu River to Kuala Berang, in the year 1303.'],
+          ['Tok Penghulu Berang', 'Laksamana, our ruler has carved the new laws onto a great stone, in Malay written with Jawi letters.'],
+          ['Tok Penghulu Berang', 'It speaks of justice and of the faith of Islam that has come to our coast. The Bayang Masa want to smash it before it can be read.'],
+          ['Hang Tuah', 'A stone that will one day prove how old our writing is. We guard it with our lives.']],
+        missions: [
+          { type: 'hunt', area: 'nw', n: 14, title: 'Shadows of Kuala Berang', hint: 'Defeat 14 creatures in Hulu Terengganu (north-west).', reward: { gold: 16000 },
+            done: [['Tok Penghulu Berang', 'The forest is calmer. But a stone giant has come for the inscription itself!']] },
+          { type: 'boss', area: 'nw', title: 'Gergasi Pemecah Batu', hint: 'Stop the stone-breaker giant at the shrine in Hulu Terengganu.', reward: { gold: 18000 },
+            boss: { name: 'Gergasi Pemecah Batu', look: 'golem', col: { body: '#5f6a72', head: '#76838c', limb: '#4d575e', eye: '#ef5350', moss: '#3a4a2a' }, scale: 2.2, moves: ['spin', 'charge', 'ring', 'summon'], summon: 'gergasi' },
+            done: [['Tok Penghulu Berang', 'The stone is safe. It will lie in the river mud for six hundred years until someone finds it again.'],
+              ['', 'History safe: the Batu Bersurat Terengganu, dated 1303, is the oldest known Malay writing in Jawi script. It is now in the Terengganu State Museum.']] },
+        ],
+      },
+      {
+        title: 'The Boatbuilders of Duyong', era: '1800s', giver: 'Pak Su Awang',
+        intro: [['', 'The mist carries you to Pulau Duyong, an island in the mouth of the Terengganu River, in the 1800s.'],
+          ['Pak Su Awang', 'We build perahu and great sailing ships here, Laksamana, from chengal wood, with no drawings at all. The design lives in our hands and our heads.'],
+          ['Pak Su Awang', 'But shadows are setting fire to the boatyards, and a sea serpent off Pulau Redang is sinking every boat that leaves.'],
+          ['Hang Lekir', 'A sea serpent! Finally something worth a fight at sea.']],
+        missions: [
+          { type: 'hunt', area: 'se', n: 14, title: 'Save the Boatyards', hint: 'Defeat 14 creatures on Pulau Duyong (south-east).', reward: { weapon: 'lading' },
+            done: [['Pak Su Awang', 'The yards are safe! Take this lading. We use it to shape the hulls, and our fighters use it for everything else.'], ['', 'You obtained the Lading Terengganu!']] },
+          { type: 'boss', area: 'ne', title: 'Ular Laut Bayang', hint: 'Slay the shadow sea serpent off Pulau Redang (north-east).', reward: { gold: 19000 },
+            boss: { name: 'Ular Laut Bayang', look: 'snake', col: { skin: '#1e3a5a', belly: '#4fc3f7', glow: '#ef5350' }, scale: 1.9, moves: ['ring', 'pounce', 'knives', 'pounce', 'summon'], summon: 'hantu', orbs: true },
+            done: [['Pak Su Awang', 'The sea is open again. Terengganu boats will sail to Siam, Java and China.'],
+              ['', 'History safe: Pulau Duyong boatbuilders still make traditional boats by hand, a skill passed down for generations.']] },
+        ],
+      },
+      {
+        title: 'The Bell of Bukit Puteri', era: '1830s to 1870s', giver: 'Baginda Omar',
+        intro: [['', 'The mist brings you to the hill fort of Bukit Puteri in Kuala Terengganu, in the time of Sultan Omar.'],
+          ['Baginda Omar', 'From this hill we watch the river mouth. When enemies come, we ring the great bell so the whole town can prepare.'],
+          ['Baginda Omar', 'The Bayang Masa have stolen the bell\'s voice. Without its warning, the town will be taken by surprise.'],
+          ['Hang Kasturi', 'Then we take the hill back and let the bell ring again.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 14, title: 'Climb Bukit Puteri', hint: 'Defeat 14 creatures on Bukit Puteri (north).', reward: { gold: 20000 },
+            done: [['Baginda Omar', 'The slopes are clear. The shadow captain holds the fort itself.']] },
+          { type: 'boss', area: 'n', title: 'Hulubalang Bukit Puteri', hint: 'Defeat the shadow captain inside the fort on Bukit Puteri.', reward: { skill: 'ombak' },
+            boss: { name: 'Hulubalang Bukit Puteri', look: 'human', weapon: 'gada', scale: 1.3, moves: ['spin', 'knives', 'spin', 'summon'], summon: 'askar' },
+            done: [['', 'The great bell rings out over the South China Sea.'],
+              ['Baginda Omar', 'Hear that? The sea itself answers. Take the power of the waves, Laksamana.'],
+              ['', 'You learned Gelombang Ombak! History safe: the bell and the old fort walls can still be seen on Bukit Puteri today.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'kelantan', name: 'Kelantan', town: 'Kota Bharu', palace: 'Istana Jahar', style: 'kampung',
+    host: 'Tok Penghulu Kota', shopkeeper: 'Kak Siti', shop: ['jamu', 'lading', 'badik', 'sumpit'], trim: '#ffca28',
+    areas: {
+      nw: { name: 'Gua Musang', biome: 'cave' },
+      n: { name: 'Pantai Cahaya Bulan', biome: 'beach' },
+      ne: { name: 'Sawah Tumpat', biome: 'paddy' },
+      sw: { name: 'Hutan Kuala Krai', biome: 'jungle' },
+      se: { name: 'Bukit Marak', biome: 'hill', landmark: 'shrine' },
+    },
+    chapters: [
+      {
+        title: 'Cik Siti Wan Kembang', era: '1600s', giver: 'Cik Siti Wan Kembang', pal: { female: true, baju: '#f8bbd0', sampin: '#ad1457', tanjak: '#ffd54f', trim: '#ffd54f', skin: '#c99062' },
+        intro: [['', 'The mist lands in Kelantan, in the time of a legendary queen.'],
+          ['Cik Siti Wan Kembang', 'Welcome, Laksamana. I rule Kelantan, and I ride to battle myself. Traders from Arabia and China come to my port.'],
+          ['Cik Siti Wan Kembang', 'I keep a pet kijang, a golden barking deer. Now shadow hunters stalk it in the forests of Kuala Krai.'],
+          ['Hang Lekiu', 'A queen who fights her own battles. We will find your kijang, Tuanku.']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 14, title: 'Hunters in Kuala Krai', hint: 'Defeat 14 creatures in Hutan Kuala Krai (south-west).', reward: { gold: 20000 },
+            done: [['Cik Siti Wan Kembang', 'I hear my kijang calling! But a great python has coiled around the place where it hides.']] },
+          { type: 'boss', area: 'sw', title: 'Ular Sawa Bayang', hint: 'Defeat the shadow python in Hutan Kuala Krai and free the golden kijang.', reward: { gold: 22000 },
+            boss: { name: 'Ular Sawa Bayang', look: 'snake', col: { skin: '#4a3a1e', belly: '#ffca28', glow: '#7c4dff' }, scale: 1.9, moves: ['pounce', 'ring', 'pounce', 'knives', 'summon'], summon: 'harimau', orbs: true },
+            done: [['Cik Siti Wan Kembang', 'My kijang is safe! From today the kijang will be the symbol of Kelantan.'],
+              ['', 'History safe: the kijang is still on the Kelantan state crest, and also on the emblem of Bank Negara Malaysia.']] },
+        ],
+      },
+      {
+        title: 'The Moon Kite', era: 'traditional', giver: 'Pak Mat Wau',
+        intro: [['', 'The mist brings you to Pantai Cahaya Bulan on the day of the kite festival.'],
+          ['Pak Mat Wau', 'This is the wau bulan, the moon kite, Laksamana. Bamboo frame, paper cut like lace, and a hummer that sings in the wind.'],
+          ['Pak Mat Wau', 'Tonight there is Mak Yong theatre and wayang kulit too. But a shadow spirit is tearing every kite from the sky.'],
+          ['Hang Jebat', 'Spirits that hate kites? These Bayang Masa really do hate fun.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 14, title: 'Clear the Festival Beach', hint: 'Defeat 14 creatures on Pantai Cahaya Bulan (north).', reward: { weapon: 'tekpi' },
+            done: [['Pak Mat Wau', 'Our silat master watched you fight. He says you have earned the tekpi of Kelantan silat.'], ['', 'You obtained the Tekpi Kelantan!']] },
+          { type: 'boss', area: 'n', title: 'Hantu Wau', hint: 'Defeat the kite-tearing spirit over Pantai Cahaya Bulan.', reward: { gold: 23000 },
+            boss: { name: 'Hantu Wau', look: 'guardian', fly: true, col: { robe: '#1a237e', head: '#0d1442', gold: '#ffca28', eye: '#ffeb3b', aura: '#ffca28' }, scale: 1.5, moves: ['ring', 'pounce', 'knives', 'ring', 'summon'], summon: 'hantu' },
+            done: [['', 'Hundreds of kites rise into the evening sky, humming like a choir.'],
+              ['', 'History safe: the wau bulan is a symbol of Malaysia, and Mak Yong theatre from Kelantan is recognised by UNESCO.']] },
+        ],
+      },
+      {
+        title: 'Tok Janggut', era: '1915', giver: 'Tok Janggut',
+        intro: [['', 'The mist moves to 1915, to Pasir Puteh in southern Kelantan.'],
+          ['Tok Janggut', 'People call me Tok Janggut, for my long beard. The new land taxes are crushing our farmers, so we have risen up.'],
+          ['Tok Janggut', 'Our fight is our own, Laksamana. But the Bayang Masa want the people to forget why we stood up. They burn the rice fields of Tumpat.'],
+          ['Hang Tuah', 'The reasons people fought should never be forgotten. We will guard the fields.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 15, title: 'The Burning Fields', hint: 'Defeat 15 creatures in Sawah Tumpat (north-east).', reward: { gold: 24000 },
+            done: [['Tok Janggut', 'The fields are saved. Their general waits at the shrine on Bukit Marak.']] },
+          { type: 'boss', area: 'se', title: 'Panglima Bayang Kelantan', hint: 'Defeat the shadow general at the shrine on Bukit Marak (south-east).', reward: { gold: 26000 },
+            boss: { name: 'Panglima Bayang Kelantan', look: 'human', weapon: 'tekpi', scale: 1.3, moves: ['pounce', 'spin', 'knives', 'pounce', 'summon'], summon: 'askar' },
+            done: [['Tok Janggut', 'The people will remember. That is all a fighter can ask.'],
+              ['', 'History safe: the Tok Janggut uprising of 1915 is remembered as one of the early Malay stands against colonial rule.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'perlis', name: 'Perlis', town: 'Kangar', palace: 'Istana Arau', style: 'kampung',
+    host: 'Tok Penghulu Arau', shopkeeper: 'Pak Din', shop: ['jamu', 'tekpi', 'lading', 'badik'], trim: '#ab47bc',
+    areas: {
+      nw: { name: 'Gua Kelam', biome: 'cave', landmark: 'shrine' },
+      n: { name: 'Bukit Wang Kelian', biome: 'hill' },
+      ne: { name: 'Hutan Nakawan', biome: 'jungle' },
+      sw: { name: 'Sawah Arau', biome: 'paddy' },
+      se: { name: 'Kebun Harumanis', biome: 'plantation' },
+    },
+    chapters: [
+      {
+        title: 'The Dark Cave', era: 'early 1900s', giver: 'Tok Lombong',
+        intro: [['', 'The mist lands in Perlis, the smallest state, among its limestone hills in the early 1900s.'],
+          ['Tok Lombong', 'I mine tin, Laksamana. We carry the ore through Gua Kelam, the Dark Cave, along a stream that runs right through the hill.'],
+          ['Tok Lombong', 'But now something huge with leathery wings lives in the cave, and no miner who goes in comes out.'],
+          ['Hang Kasturi', 'Something with wings in a dark cave. I already do not like it.']],
+        missions: [
+          { type: 'hunt', area: 'nw', n: 15, title: 'Into Gua Kelam', hint: 'Defeat 15 creatures in Gua Kelam (north-west).', reward: { gold: 26000 },
+            done: [['Tok Lombong', 'I can hear the stream again. The beast nests deeper inside, by the old shrine.']] },
+          { type: 'boss', area: 'nw', title: 'Raja Kelawar Bayang', hint: 'Defeat the shadow bat king deep in Gua Kelam.', reward: { gold: 28000 },
+            boss: { name: 'Raja Kelawar Bayang', look: 'wisp', fly: true, col: { shell: '#4a148c', core: '#e1bee7' }, scale: 2.4, moves: ['ring', 'knives', 'ring', 'summon'], summon: 'hantu', orbs: true },
+            done: [['Tok Lombong', 'The cave is ours again. One day there will be a wooden walkway here so anyone can walk through it.'],
+              ['', 'History safe: Gua Kelam was used by tin miners, and today visitors walk through it on a suspended walkway.']] },
+        ],
+      },
+      {
+        title: 'The Kingdom of Perlis', era: '1843', giver: 'Syed Hussain',
+        intro: [['', 'The mist moves to 1843. Perlis is about to become a kingdom of its own, separate from Kedah.'],
+          ['Syed Hussain', 'I am Syed Hussain Jamalullail. I will be the first Raja of Perlis, and my family will rule here for generations.'],
+          ['Syed Hussain', 'But shadows are trampling the rice of Arau, and a stone giant has taken Bukit Wang Kelian on the northern border.'],
+          ['Hang Lekiu', 'A new kingdom needs a clear border. We will clear the hill.']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 15, title: 'The Fields of Arau', hint: 'Defeat 15 creatures in Sawah Arau (south-west).', reward: { gold: 28000 },
+            done: [['Syed Hussain', 'Arau is safe. Now for the giant on the border hill.']] },
+          { type: 'boss', area: 'n', title: 'Gergasi Wang Kelian', hint: 'Defeat the stone giant on Bukit Wang Kelian (north).', reward: { weapon: 'sewar' },
+            boss: { name: 'Gergasi Wang Kelian', look: 'golem', col: { body: '#bdb5a6', head: '#d0c8b8', limb: '#9e9688', eye: '#ab47bc', moss: '#6d7a4a' }, scale: 2.3, moves: ['charge', 'spin', 'ring', 'summon'], summon: 'gergasi' },
+            done: [['Syed Hussain', 'Carry this sewar, the dagger of the northern Malay courts. You have earned a place in Perlis history.'],
+              ['', 'You obtained the Sewar Kedah! History safe: the Jamalullail family still rules Perlis, and the Raja of Perlis has his palace at Arau.']] },
+        ],
+      },
+      {
+        title: 'The Harumanis Orchards', era: 'today and always', giver: 'Mak Teh Kebun', pal: { female: true, baju: '#ffcc80', sampin: '#2e7d32', tanjak: '#ffcc80', trim: '#fff3e0', skin: '#c99062' },
+        intro: [['Mak Teh Kebun', 'Laksamana! Have you tasted harumanis? The sweetest mango in the world grows only here in Perlis.'],
+          ['Mak Teh Kebun', 'A shadow spirit has made its home in the orchards. The trees are wilting and the mangoes fall before they ripen.'],
+          ['Hang Jebat', 'Fight for mangoes? Gladly. As long as we get to taste some afterwards.']],
+        missions: [
+          { type: 'hunt', area: 'se', n: 15, title: 'Save the Mango Trees', hint: 'Defeat 15 creatures in Kebun Harumanis (south-east).', reward: { gold: 29000 },
+            done: [['Mak Teh Kebun', 'The trees are greener already. The spirit hides in the forest of Nakawan.']] },
+          { type: 'boss', area: 'ne', title: 'Penunggu Nakawan', hint: 'Defeat the shadow spirit in Hutan Nakawan (north-east).', reward: { gold: 31000 },
+            boss: { name: 'Penunggu Nakawan', look: 'guardian', fly: true, col: { robe: '#2a1a3a', head: '#120a1c', gold: '#ab47bc', eye: '#ffeb3b', aura: '#ab47bc' }, scale: 1.5, moves: ['ring', 'pounce', 'summon', 'ring', 'knives'], summon: 'harimau' },
+            done: [['Mak Teh Kebun', 'Here, eat! Sweet as honey. Now you know why Perlis is proud of its harumanis.'],
+              ['', 'Perlis harumanis is protected as a product that can only come from Perlis. Pak Kemudi can now sail to Kedah.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'kedah', name: 'Kedah', town: 'Alor Setar', palace: 'Balai Besar', style: 'kampung',
+    host: 'Tok Penghulu Alor Setar', shopkeeper: 'Mak Senah', shop: ['jamu', 'sewar', 'tekpi', 'lading'], trim: '#ffee58',
+    areas: {
+      nw: { name: 'Pulau Langkawi', biome: 'beach' },
+      n: { name: 'Gunung Jerai', biome: 'highland' },
+      ne: { name: 'Jelapang Padi', biome: 'paddy' },
+      sw: { name: 'Lembah Bujang', biome: 'ruins', landmark: 'shrine' },
+      se: { name: 'Hutan Baling', biome: 'jungle' },
+    },
+    chapters: [
+      {
+        title: 'The Bujang Valley', era: 'over 2,000 years ago', giver: 'Sang Pendeta',
+        intro: [['', 'The mist sails further back than ever before, more than two thousand years, to the Merbok River in Kedah.'],
+          ['Sang Pendeta', 'Welcome to Kedah Tua, the old kingdom of the Bujang Valley. Ships from India, Arabia and China anchor here.'],
+          ['Sang Pendeta', 'We smelt iron by the Sungai Batu and build stone temples called candi. But a stone guardian has woken and turned on us.'],
+          ['Hang Tuah', 'This may be the oldest kingdom we have ever seen. It must not be erased.']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 15, title: 'Shadows Among the Candi', hint: 'Defeat 15 creatures in Lembah Bujang (south-west).', reward: { gold: 30000 },
+            done: [['Sang Pendeta', 'The traders can land again. The guardian waits at the great candi.']] },
+          { type: 'boss', area: 'sw', title: 'Penunggu Candi', hint: 'Defeat the corrupted guardian at the candi in Lembah Bujang.', reward: { gold: 32000 },
+            boss: { name: 'Penunggu Candi', look: 'guardian', fly: true, col: { robe: '#5d4037', head: '#3e2723', gold: '#ffee58', eye: '#ff7043', aura: '#ffb300' }, scale: 1.6, moves: ['ring', 'pounce', 'summon', 'ring', 'knives'], summon: 'gergasi' },
+            done: [['Sang Pendeta', 'The guardian sleeps peacefully again. Our temples will stand for a thousand years.'],
+              ['', 'History safe: the Bujang Valley is one of the oldest civilisations in South-East Asia. The iron works at Sungai Batu are around 2,500 years old.']] },
+        ],
+      },
+      {
+        title: 'The Eagle of Langkawi', era: 'legend', giver: 'Penghulu Langkawi',
+        intro: [['', 'The mist lands on the island of Langkawi. Its name is said to come from helang, eagle, and kawi, the reddish-brown colour of the eagle.'],
+          ['Penghulu Langkawi', 'Our island has many legends, Laksamana, like the story of Mahsuri, the innocent woman whose curse lasted seven generations.'],
+          ['Penghulu Langkawi', 'Now a giant shadow eagle hunts our fishermen. It flies from the beaches of Langkawi.'],
+          ['Hang Lekir', 'An eagle the size of a ship? This journey gets stranger every day.']],
+        missions: [
+          { type: 'hunt', area: 'nw', n: 15, title: 'The Beaches of Langkawi', hint: 'Defeat 15 creatures on Pulau Langkawi (north-west).', reward: { gold: 32000 },
+            done: [['Penghulu Langkawi', 'The beaches are safe. Look up! The eagle is circling!']] },
+          { type: 'boss', area: 'nw', title: 'Helang Bayang', hint: 'Defeat the giant shadow eagle on Pulau Langkawi.', reward: { gold: 34000 },
+            boss: { name: 'Helang Bayang', look: 'guardian', fly: true, col: { robe: '#6d3a1a', head: '#f5f0e1', gold: '#ffb300', eye: '#ffeb3b', aura: '#ff7043' }, scale: 1.7, moves: ['pounce', 'ring', 'pounce', 'knives', 'summon'], summon: 'pemanah' },
+            done: [['Penghulu Langkawi', 'The fishermen can go out again. One day there will be a great eagle statue by our harbour.'],
+              ['', 'Langkawi is a UNESCO Global Geopark today, and Dataran Lang, the Eagle Square, welcomes visitors by the sea.']] },
+        ],
+      },
+      {
+        title: 'The Rice Bowl of Malaysia', era: '1136 to today', giver: 'Sultan Kedah',
+        intro: [['', 'The mist moves through the centuries of the Kedah Sultanate, one of the oldest royal lines in the world, said to begin in 1136.'],
+          ['Sultan Kedah', 'Our green fields feed the nation, Laksamana. They call Kedah the Rice Bowl of Malaysia.'],
+          ['Sultan Kedah', 'The Bayang Masa want to poison the fields of Jelapang Padi, and a dragon has woken on Gunung Jerai, the mountain that guides every sailor home.'],
+          ['Hang Tuah', 'Rice for the people and a light for the sailors. We will protect both.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 16, title: 'Guard the Rice Bowl', hint: 'Defeat 16 creatures in Jelapang Padi (north-east).', reward: { gold: 34000 },
+            done: [['Sultan Kedah', 'The harvest is safe. Now climb Gunung Jerai.']] },
+          { type: 'boss', area: 'n', title: 'Naga Bayang Jerai', hint: 'Defeat the shadow dragon on Gunung Jerai (north).', reward: { gold: 38000 },
+            boss: { name: 'Naga Bayang Jerai', look: 'croc', col: { skin: '#3a3a1e', ridge: '#ffee58', horns: true }, scale: 2.5, moves: ['ring', 'charge', 'spin', 'knives', 'summon'], summon: 'beruang', orbs: 'fire' },
+            done: [['Sultan Kedah', 'Kedah is safe, from the Bujang Valley to the top of Jerai.'],
+              ['', 'History safe: Kedah\'s rice fields still feed much of Malaysia. Tunku Abdul Rahman, the first Prime Minister, was born in Alor Setar in 1903.']] },
+        ],
+      },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------- build maps, enemies and chapters from STATES
@@ -344,7 +576,7 @@ function biomeTile(b, x, y, n, h) {
   switch (b) {
     case 'jungle': return n > 0.5 || h < 0.1 ? T.JTREE : T.DARK;
     case 'forest': return n > 0.62 || h < 0.06 ? T.TREE : (h > 0.93 ? T.FLOWER : T.GRASS);
-    case 'hill': return n > 0.58 || h < 0.07 ? T.ROCK : T.DIRT;
+    case 'hill': return n > 0.64 || h < 0.045 ? T.ROCK : T.DIRT;
     case 'swamp': return n > 0.64 ? T.WATER : (h < 0.07 ? T.MANGROVE : T.SWAMP);
     case 'beach': return h < 0.05 ? T.PALM : T.SAND;
     case 'paddy': return (y % 5 === 0 && x % 9 !== 0) ? T.GRASS : T.PADDY;

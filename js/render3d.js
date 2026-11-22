@@ -169,7 +169,7 @@ const gfx = (() => {
       const Y = new THREE.Vector3(0, 1, 0);
       const natural = (names, items, sc, tint, tv = 0.12) => {
         const groups = names.map(() => []); items.forEach(it => groups[Math.floor(it.r * 7.31 % 1 * names.length)].push(it));
-        names.forEach((nm, gi) => { for (const pt of NAT[nm] || []) { pt.geo.userData.keep = true; pt.mat.userData.keep = true; instanced(pt.geo, pt.mat, groups[gi], (it, m, c) => { m.compose(tmpV.set(it.x, it.h - 0.03, it.z), tmpQ.setFromAxisAngle(Y, it.r * 6.28), tmpS.setScalar(it.s * sc)); c.set(tint).offsetHSL(0, 0, (it.r - 0.5) * tv); }, { chunk: 8, lod: lodOn ? 'hi' : null }); } });
+        names.forEach((nm, gi) => { for (const pt of NAT[nm] || []) { pt.geo.userData.keep = true; pt.mat.userData.keep = true; instanced(pt.geo, pt.mat, groups[gi], (it, m, c) => { m.compose(tmpV.set(it.x, it.h - 0.03, it.z), tmpQ.setFromAxisAngle(Y, it.r * 6.28), tmpS.setScalar(it.s * sc)); if (typeof tint === 'number') { const k = tint * (1 + (it.r - 0.5) * tv); c.setRGB(k, k * 0.97, k * 0.92); } else c.set(tint).offsetHSL(0, 0, (it.r - 0.5) * tv); }, { chunk: 8, lod: lodOn ? 'hi' : null }); } });
       };
       // distant woods use light stand-ins (same size and colour), swapped for the full models as you approach
       const lodOn = true;
@@ -182,7 +182,7 @@ const gfx = (() => {
       natural(['NormalTree_5', 'MapleTree_4', 'NormalTree_5'], lists.jtree, 0.55, pc.jtree ? '#c4b8e8' : '#b4d4a8');
       natural(['MapleTree_4'], lists.mangrove, 0.42, '#8aa07a');
       natural(['PalmTree_1', 'PalmTree_2', 'PalmTree_3'], lists.palm, 0.42, '#ffffff', 0.08);
-      natural(['Rock_1', 'Rock_2', 'Rock_3'], lists.rock, 0.85, pc.rock || (MAP === 'naga' ? '#6a5a50' : '#b8b2a6'), 0.15);
+      natural(['Rock_1', 'Rock_2', 'Rock_3'], lists.rock, 0.85, pc.rock || (MAP === 'naga' ? '#6a5a50' : 1), 0.25);
       // bushes, plants, grass and flowers scattered over open ground
       const dec = { bush: [], plant: [], grass: [], flower: [] };
       for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) {
