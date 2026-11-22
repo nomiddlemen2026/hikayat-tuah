@@ -354,7 +354,8 @@ const ui = (() => {
     if (wins.status.el.classList.contains('min')) set(wins.status.el.querySelector('.tt'), 'text', 'HP ' + Math.ceil(p.hp) + '/' + maxHp() + '  SP ' + Math.floor(p.sp) + '/' + maxSp());
     else set(wins.status.el.querySelector('.tt'), 'text', 'Basic Info');
     root.classList.toggle('touch', isTouch);
-    if (frameN % 20 === 1) { root.style.setProperty('--status-h', wins.status.el.offsetHeight + 'px'); const mr = wins.mini.el.getBoundingClientRect(); $('tracker').style.top = (wins.mini.el.offsetTop + wins.mini.el.offsetHeight + 4) + 'px'; }
+    root.classList.toggle('short', H < 440);
+    if (frameN % 20 === 1) { root.style.setProperty('--status-h', wins.status.el.offsetHeight + 'px'); const mr = wins.mini.el.getBoundingClientRect(); $('tracker').style.top = isTouch ? '' : (wins.mini.el.offsetTop + wins.mini.el.offsetHeight + 4) + 'px'; }
     const hp = Math.ceil(p.hp), mh = maxHp(), sp = Math.floor(p.sp), ms = maxSp();
     set($('s-hp'), 'width', (hp / mh * 100).toFixed(1) + '%'); set($('s-hpt'), 'text', hp + ' / ' + mh);
     $('s-hpb').classList.toggle('low', hp / mh < 0.25);

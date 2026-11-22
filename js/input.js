@@ -43,17 +43,31 @@ function useHotkey(i) {
 }
 
 // on-screen touch buttons (drawn on the canvas, only on touch devices)
-function buttons() {
-  if (!isTouch) return [];
-  const s = UIS, m = 18 * s;
-  const A = { id: 'attack', x: W - m - SAFE.r - 46 * s, y: H - m - SAFE.b - 46 * s, r: 40 * s };
-  const S = { id: 'skill', x: A.x - 86 * s, y: A.y + 14 * s, r: 27 * s };
-  const P = { id: 'potion', x: A.x - 2 * s, y: A.y - 84 * s, r: 23 * s };
-  const out = [A, S, P];
-  if (use3D()) out.push({ id: 'camL', x: A.x - 132 * s, y: A.y - 62 * s, r: 17 * s }, { id: 'camR', x: A.x - 90 * s, y: A.y - 96 * s, r: 17 * s }, { id: 'camZ', x: A.x - 172 * s, y: A.y - 26 * s, r: 15 * s });
+// MLBB-style right-hand cluster: a big basic-attack button in the corner and the skills fanned in an arc
+// around it, so every skill is one thumb-roll away. More than 4 skills: the small arrow button flips the page.
+let fanPage = 0;
+function fanSkills() {
+  const out = [];
+  if (!save) return out;
+  for (const id of save.hotkeys) if (id && SKILLS[id] && save.skills.includes(id) && !out.includes(id)) out.push(id);
+  for (const id of SKILL_ORDER) if (save.skills.includes(id) && !out.includes(id)) out.push(id);
   return out;
 }
-function hitBtn(x, y) { for (const b of buttons()) if (dist(x, y, b.x, b.y) < b.r * 1.25) return b.id; return null; }
+const FAN_ANGLES = [180, 210, 240, 270].map(d => d * Math.PI / 180); // left of the attack button, round to straight above it
+function buttons() {
+  if (!isTouch || !save) return [];
+  const s = UIS;
+  const A = { id: 'attack', x: W - SAFE.r - 76 * s, y: H - SAFE.b - 72 * s, r: 50 * s };
+  const out = [A];
+  const list = fanSkills(), pages = Math.max(1, Math.ceil(list.length / 4)); fanPage %= pages;
+  const R = 114 * s;
+  list.slice(fanPage * 4, fanPage * 4 + 4).forEach((id, i) => out.push({ id: 'sk:' + id, skill: id, x: A.x + Math.cos(FAN_ANGLES[i]) * R, y: A.y + Math.sin(FAN_ANGLES[i]) * R, r: 28 * s }));
+  if (pages > 1) out.push({ id: 'page', x: A.x + Math.cos(-1.05) * 100 * s, y: A.y + Math.sin(-1.05) * 100 * s, r: 18 * s, pages });
+  out.push({ id: 'potion', x: A.x - 176 * s, y: A.y + 36 * s, r: 23 * s });
+  return out;
+}
+// the closest button wins, so neighbouring skills never steal each other's taps
+function hitBtn(x, y) { let best = null, bd = 1e9; for (const b of buttons()) { const d = dist(x, y, b.x, b.y) / b.r; if (d < 1.2 && d < bd) { bd = d; best = b.id; } } return best; }
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); audio.init();
   if (typing()) document.activeElement.blur();
@@ -69,9 +83,9 @@ cv.addEventListener('pointerdown', e => {
   if (b) {
     pointers[e.pointerId].btn = b;
     if (b === 'attack') { input.attackHeld = true; doAction(); }
-    if (b === 'skill') doSkill();
+    if (b.startsWith('sk:')) castSkill(b.slice(3));
     if (b === 'potion') usePotion();
-    if (b === 'camZ') gfx.cycleZoom();
+    if (b === 'page') { fanPage++; audio.pickup && audio.pickup(); }
     return;
   }
   if (e.pointerType === 'mouse' && e.button === 2 && use3D()) { pointers[e.pointerId].btn = 'rot'; pointers[e.pointerId].lx = x; pointers[e.pointerId].ly = y; return; }

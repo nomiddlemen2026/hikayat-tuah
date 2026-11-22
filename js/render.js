@@ -1,5 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------- render
+const fanImgs = {};
+function iconImg(id) { let im = fanImgs[id]; if (!im) { im = fanImgs[id] = new Image(); im.src = iconURL(id, 48); } return im; }
 function drawBuilding(g, b) {
   const x = b.x * TS, y = b.y * TS, w = b.w * TS, h = b.h * TS;
   g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x + 4, y + h - 4, w, 8);
@@ -158,7 +160,7 @@ function renderHUD(reg) {
   }
   // boss bar
   if (bossBar && bossBar.hp > 0) {
-    const bw = Math.min(W * 0.34, 300 * s), bx = W / 2 - bw / 2, by = 30 * s;
+    const bw = Math.min(W * 0.34, 300 * s), bx = W / 2 - bw / 2, by = (isTouch ? 56 : 30) * s;
     panel(bx - 6 * s, by - 18 * s, bw + 12 * s, 34 * s);
     txt(bossBar.def.name, W / 2, by - 4 * s, 11 * s, '#ff8a80', 'center');
     ctx.fillStyle = '#000'; ctx.fillRect(bx, by, bw, 10 * s); ctx.fillStyle = '#c62828'; ctx.fillRect(bx, by, bw * bossBar.hp / bossBar.maxHp, 10 * s);
@@ -168,23 +170,27 @@ function renderHUD(reg) {
   // buttons
   const it = nearestInteract();
   for (const b of buttons()) {
+    if (b.id === 'attack') { ctx.globalAlpha = 0.35; ctx.strokeStyle = '#d4a82a'; ctx.lineWidth = 1.5 * s; ctx.setLineDash([3 * s, 6 * s]); ctx.beginPath(); ctx.arc(b.x, b.y, 114 * s, Math.PI * 0.94, Math.PI * 1.56); ctx.stroke(); ctx.setLineDash([]); }
     ctx.globalAlpha = 0.85;
     const pressed = Object.values(pointers).some(q => q.btn === b.id);
     ctx.fillStyle = pressed ? 'rgba(212,168,42,.6)' : 'rgba(20,12,6,.55)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
     ctx.strokeStyle = '#d4a82a'; ctx.lineWidth = 2; ctx.stroke();
     if (b.id === 'attack') {
-      if (it) txt(it.type === 'chest' ? 'OPEN' : it.type === 'altar' ? 'TAKE' : 'TALK', b.x, b.y + 5 * s, 14 * s, '#ffe082', 'center');
-      else { ctx.save(); ctx.translate(b.x - 4 * s, b.y + 4 * s); ctx.rotate(-0.8); ctx.scale(1.3 * s, 1.3 * s); drawWeapon(ctx, save.weapon === 'fist' ? 'keris' : save.weapon, 16); ctx.restore(); }
+      if (it) txt(it.type === 'chest' ? 'OPEN' : it.type === 'altar' ? 'TAKE' : 'TALK', b.x, b.y + 6 * s, 17 * s, '#ffe082', 'center');
+      else { ctx.save(); ctx.translate(b.x - 8 * s, b.y + 8 * s); ctx.rotate(-0.8); ctx.scale(1.8 * s, 1.8 * s); drawWeapon(ctx, save.weapon === 'fist' ? 'keris' : save.weapon, 16); ctx.restore(); }
     }
-    if (b.id === 'camL' || b.id === 'camR') {
-      const d = b.id === 'camL' ? -1 : 1; ctx.strokeStyle = '#ffe082'; ctx.lineWidth = 2 * s; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.5, d < 0 ? -0.3 : Math.PI + 0.3, d < 0 ? Math.PI * 1.4 : -Math.PI * 0.4, d < 0); ctx.stroke();
-      const ex = b.x + Math.cos(d < 0 ? Math.PI * 1.4 : -Math.PI * 0.4) * b.r * 0.5, ey = b.y + Math.sin(d < 0 ? Math.PI * 1.4 : -Math.PI * 0.4) * b.r * 0.5;
-      ctx.fillStyle = '#ffe082'; ctx.beginPath(); ctx.arc(ex, ey, 3 * s, 0, 7); ctx.fill();
+    if (b.skill) {
+      const id = b.skill, sk = SKILLS[id], cdl = skillCdLeft(id), off = player.sp < sk.sp || (id === 'silat' && save.weapon === 'fist');
+      const im = iconImg(id); if (im.complete && im.naturalWidth) { ctx.globalAlpha = off ? 0.4 : 0.95; ctx.drawImage(im, b.x - b.r * 0.72, b.y - b.r * 0.72, b.r * 1.44, b.r * 1.44); ctx.globalAlpha = 0.85; }
+      if (cdl > 0) {
+        ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r, -Math.PI / 2, -Math.PI / 2 + 6.283 * Math.min(1, cdl / sk.cd)); ctx.fill();
+        txt(cdl >= 1 ? '' + Math.ceil(cdl) : cdl.toFixed(1), b.x, b.y + 5 * s, 13 * s, '#fff', 'center');
+      }
+      txt(sk.sp + '', b.x + b.r * 0.62, b.y + b.r * 0.9, 9 * s, player.sp < sk.sp ? '#ff8a80' : '#90caf9', 'center');
     }
-    if (b.id === 'camZ') txt('ZOOM', b.x, b.y + 3 * s, 7 * s, '#ffe082', 'center');
-    if (b.id === 'skill') {
-      txt('SILAT', b.x, b.y + 4 * s, 10 * s, save.weapon === 'fist' || player.sp < SILAT_SP ? '#777' : '#fff', 'center');
-      if (player.skillCd > 0) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r, -Math.PI / 2, -Math.PI / 2 + 6.283 * (player.skillCd / 5)); ctx.fill(); }
+    if (b.id === 'page') {
+      ctx.fillStyle = '#ffe082'; ctx.beginPath(); ctx.moveTo(b.x - 5 * s, b.y - 6 * s); ctx.lineTo(b.x + 6 * s, b.y); ctx.lineTo(b.x - 5 * s, b.y + 6 * s); ctx.fill();
+      txt((fanPage + 1) + '/' + b.pages, b.x, b.y + b.r + 9 * s, 8 * s, '#ffe082', 'center');
     }
     if (b.id === 'potion') {
       ctx.fillStyle = '#69f0ae'; ctx.beginPath(); ctx.arc(b.x, b.y + 3 * s, 7 * s, 0, 7); ctx.fill(); ctx.fillRect(b.x - 3 * s, b.y - 9 * s, 6 * s, 7 * s); ctx.fillStyle = '#8d5a2b'; ctx.fillRect(b.x - 4 * s, b.y - 11 * s, 8 * s, 3 * s);
