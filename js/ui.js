@@ -194,6 +194,8 @@ const ui = (() => {
     else if (a === 'hot') useHotkey(+arg);
     else if (a === 'sound') { muted = !muted; try { localStorage.setItem('hikayat_tuah_mute', muted ? '1' : '0'); } catch (e) { } audio.applyMute(); refreshAll(); }
     else if (a === 'resume') close('options');
+    else if (a === 'savecode') { codeText = makeSaveCode(); codeMsg = 'Save code ready. Copy it and keep it somewhere safe (notes, WhatsApp to yourself).'; refreshAll(); copyCode(); }
+    else if (a === 'loadcode') { const r = loadSaveCode(codeText); codeMsg = r; refreshAll(); }
     else if (a === 'full') mobile.goFull();
     else if (a === 'detail') { gfx.setDetail(gfx.getDetail() === 'high' ? 'low' : 'high'); log('Detail: ' + gfx.getDetail() + '.', 'sys'); refreshAll(); }
     else if (a === 'gfx') { gfxMode = gfxMode === '3d' ? '2d' : '3d'; try { localStorage.setItem('hikayat_tuah_gfx', gfxMode); } catch (e) { } log('Graphics: ' + (gfxMode === '3d' ? '3D' : 'Classic 2D') + '.', 'sys'); refreshAll(); }
@@ -313,8 +315,37 @@ const ui = (() => {
     audio.pickup(); writeSave(); refreshAll();
   }
 
+  let codeText = '', codeMsg = '';
+  document.addEventListener('input', e => { if (e.target && e.target.id === 'savecode') codeText = e.target.value; });
+  function makeSaveCode() {
+    writeSave();
+    let raw = ''; try { raw = localStorage.getItem('hikayat_tuah_save') || ''; } catch (e) { }
+    if (!raw) return '';
+    return 'HT1-' + btoa(unescape(encodeURIComponent(raw)));
+  }
+  function copyCode() {
+    if (!codeText) return;
+    const done = () => { codeMsg = 'Copied! Paste it somewhere safe. To load it later: Options → paste → Load save code.'; refreshAll(); };
+    const fallback = () => setTimeout(() => { const t = document.getElementById('savecode'); if (t) { t.focus(); t.select(); try { if (document.execCommand('copy')) done(); } catch (e) { } t.blur(); } }, 30);
+    try { if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(codeText).then(done, fallback); return; } } catch (e) { }
+    fallback();
+  }
+  function loadSaveCode(code) {
+    code = (code || '').replace(/\s+/g, '');
+    if (!code) return 'Paste a save code in the box first.';
+    if (code.indexOf('HT1-') !== 0) return 'That is not a Hikayat Tuah save code.';
+    let s;
+    try { s = JSON.parse(decodeURIComponent(escape(atob(code.slice(4))))); } catch (e) { return 'The code is broken or incomplete. Copy the whole code and try again.'; }
+    if (!s || typeof s !== 'object' || !s.stats) return 'The code is broken or incomplete. Copy the whole code and try again.';
+    try { localStorage.setItem('hikayat_tuah_save', JSON.stringify(s)); } catch (e) { return 'Could not save on this device.'; }
+    state = 'title'; setTimeout(() => location.reload(), 600);
+    return 'Save loaded! Restarting… then tap Continue.';
+  }
   function rOptions() {
-    return `<div class="opts"><button data-act="sound">${muted ? 'Sound: Off' : 'Sound: On'}</button><button data-act="resetui">Reset window positions</button>${isTouch ? '<button data-act="full">Fullscreen</button>' : ''}${gfx.ok ? `<button data-act="gfx">Graphics: ${gfxMode === '3d' ? '3D' : 'Classic 2D'}</button><button data-act="detail">Detail: ${gfx.getDetail() === 'high' ? 'High (realistic)' : 'Low (fast)'}</button>` : ''}<button class="pri" data-act="resume">Resume game</button></div>
+    return `<div class="savebox"><b>Save code</b> · move your progress to another phone, the app or the website, or keep a backup before updates.
+      <textarea id="savecode" rows="2" spellcheck="false" placeholder="Paste a save code here, then tap Load save code">${h(codeText)}</textarea>
+      <div class="opts"><button data-act="savecode">Copy save code</button><button data-act="loadcode">Load save code</button></div>${codeMsg ? `<div class="hint">${h(codeMsg)}</div>` : ''}</div>
+      <div class="opts"><button data-act="sound">${muted ? 'Sound: Off' : 'Sound: On'}</button><button data-act="resetui">Reset window positions</button>${isTouch ? '<button data-act="full">Fullscreen</button>' : ''}${gfx.ok ? `<button data-act="gfx">Graphics: ${gfxMode === '3d' ? '3D' : 'Classic 2D'}</button><button data-act="detail">Detail: ${gfx.getDetail() === 'high' ? 'High (realistic)' : 'Low (fast)'}</button>` : ''}<button class="pri" data-act="resume">Resume game</button></div>
       <table class="keys">
         <tr><th>Move</th><td>WASD / arrows · touch: drag on the left</td></tr>
         <tr><th>Camera</th><td>Right-drag or Z / X to rotate, mouse wheel to zoom · touch: rotate and zoom buttons</td></tr>
