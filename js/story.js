@@ -20,7 +20,7 @@ function startIntro() {
 function talkBendahara() {
   const m = currentMission();
   if (!save.prologue) return say([['Bendahara', 'Your keris is in the chest next to your house, south of the plaza.']]);
-  if (save.chapter >= 5) return say([['Bendahara', 'Kampung Bendahara, Pulau Naga, even the hidden Bunian... your hikayat will be told for a thousand years, Tuah.']]);
+  if (save.chapter >= 5) return say([['Bendahara', 'Kampung Bendahara, Pulau Naga, even the hidden Bunian... and now a journey through time itself. Your hikayat will be told for a thousand years, Tuah.'], ['Bendahara', 'Pak Kemudi waits with the Bunian ship at the jetty.']]);
   if (save.chapter >= 2) { const ch = curChapter(); return say([['Bendahara', ch.title + '. Pak Kemudi waits at the jetty south of the town to sail you to ' + MAPS[ch.map].name + '.'], ['Bendahara', 'Tok Besi has new weapons for sale, and Mak Som will always heal you.']]); }
   if (m === 'done') return say([['Bendahara', 'The Keris Taming Sari is back in worthy hands. Melaka owes the five of you everything!']]);
   say([['Bendahara', m.title + '. ' + m.hint], ['Bendahara', 'You have found ' + foundCount() + ' of your 4 brothers. Visit Mak Som if you need healing.']]);
@@ -85,6 +85,7 @@ function openChest(c) {
 // Called when the player taps past an ending screen.
 function afterEnding() {
   state = 'play';
+  if (save.chapter >= 5 && !save.statesIntro) { setTimeout(startStatesArc, 300); return; }
   if (save.chapter === 1 && save.taming) {
     save.chapter = 2; save.ci = 0; save.hunt = 0;
     if (!save.unlocked.includes('bendahara')) save.unlocked.push('bendahara');
@@ -98,6 +99,7 @@ function afterEnding() {
   }
 }
 function checkChapterIntro() {
+  if (save.chapter >= 5 && !save.statesIntro) { if (state === 'play') startStatesArc(); return; }
   const ch = curChapter();
   if (!ch || MAP !== ch.map || state !== 'play') return checkPendingMission();
   if (!save.chIntro[save.chapter]) {
@@ -139,7 +141,8 @@ function completeMission() {
     giveReward(m.reward);
     save.ci++; save.hunt = 0;
     audio.fanfare();
-    if (save.ci >= 4) finishChapter(m.reward);
+    const ch = curChapter();
+    if (!ch || save.ci >= ch.missions.length) finishChapter(m.reward);
     else { const nm = curMission(); toast(nm.title); spawnMissionBoss(); }
     writeSave();
   });
@@ -165,21 +168,42 @@ function giveReward(r) {
   gainXP(Math.round(xpNeed(save.lvl) * 0.25));
 }
 function finishChapter(r) {
-  const n = save.chapter;
-  if (r && r.end) { save.chapter = 5; save.ci = 0; writeSave(); state = 'ending'; endingT = 0; return; }
+  const n = save.chapter, prev = CHAPTERS[n];
   save.chapter = n + 1; save.ci = 0; save.hunt = 0;
+  if (r && r.end) { writeSave(); state = 'ending'; endingT = 0; return; } // end of the Bunian arc (Chapter 4)
+  ensureUnlocked();
   const next = CHAPTERS[save.chapter];
   writeSave();
-  setTimeout(() => say([['', 'CHAPTER ' + save.chapter + ' begins: ' + next.title.split(': ')[1] + '.'], ['', 'Talk to Pak Kemudi at the jetty to sail to ' + MAPS[next.map].name + '.']], () => toast(next.title)), 400);
+  if (!next) { state = 'ending'; endingT = 0; return; } // the last state written so far
+  if (next.map === MAP) { refreshGiver(); setTimeout(() => say([['', 'CHAPTER ' + save.chapter + ': ' + next.short + ' (' + next.title.split('(').pop()]], () => checkChapterIntro()), 500); return; }
+  const where = MAPS[next.map].name;
+  setTimeout(() => say([['', (prev && prev.state ? prev.state.name + ' is safe. ' : '') + 'CHAPTER ' + save.chapter + ' begins: ' + (next.short || next.title.split(': ')[1]) + '.'], ['', 'Talk to Pak Kemudi at the jetty to sail to ' + where + '.']], () => toast(next.title)), 400);
+}
+// every map that the current chapter needs is open to Pak Kemudi
+function ensureUnlocked() {
+  if (save.chapter >= 5 && !save.statesIntro) return;
+  for (let c = 2; c <= save.chapter; c++) { const ch = CHAPTERS[c]; if (ch && !save.unlocked.includes(ch.map)) { save.unlocked.push(ch.map); if (c === save.chapter && player) log('New destination for Pak Kemudi: ' + MAPS[ch.map].name + '.', 'sys'); } }
+}
+// the journey through the Malaysian states begins after the Bunian arc
+function startStatesArc() {
+  say([
+    ['Puteri Bunian', 'Laksamana, wait! The Shadow King is gone, but his shadow did not die. It split into a thousand pieces and fled into the river of time.'],
+    ['Puteri Bunian', 'We call them the Bayang Masa, the Time Shadows. They will try to unmake the history of every Malay land, from Melaka to Sabah and Sarawak.'],
+    ['Puteri Bunian', 'Take our mist ship. It sails through the years as easily as through the waves. Pak Kemudi knows how to steer it.'],
+    ['Hang Tuah', 'Then we will sail through every state and every age, and make sure history happens as it should.'],
+    ['', 'A NEW JOURNEY begins: the states of Malaysia, three chapters in each. Talk to Pak Kemudi at the jetty to sail to Melaka.'],
+  ], () => { save.statesIntro = true; ensureUnlocked(); writeSave(); const ch = curChapter(); if (ch) toast(ch.title); });
 }
 function talkBoatman() {
+  if (save.chapter >= 5 && !save.statesIntro) return startStatesArc();
   const lines = [['Pak Kemudi', save.unlocked.length > 1 ? 'Where shall we sail, Laksamana? The wind is good today.' : 'The seas are rough, Laksamana. Finish your work in Melaka first, then I will take you anywhere.']];
   say(lines, () => { if (save.unlocked.length > 1) ui.open('travel'); });
 }
 function talkGiver(mapId) {
-  const ch = CHAPTERS[MAPS[mapId].chapter], giver = ch.giver;
+  const nums = Object.keys(CHAPTERS).map(Number).filter(c => CHAPTERS[c].map === mapId), last = Math.max(...nums);
+  const ch = CHAPTERS[Math.min(Math.max(save.chapter, nums[0]), last)], giver = ch.map === mapId && save.chapter <= last ? ch.giver : (STATE_BY_MAP[mapId] ? STATE_BY_MAP[mapId].host : ch.giver);
   restoreParty();
-  if (save.chapter > MAPS[mapId].chapter) return say([[giver, 'Our home is at peace thanks to you, Laksamana. Rest here whenever you like.'], ['', 'Your HP and SP are restored.']]);
+  if (save.chapter > last) return say([[giver, 'Our home is at peace thanks to you, Laksamana. Rest here whenever you like.'], ['', 'Your HP and SP are restored.']]);
   const m = curMission();
   if (!save.chIntro[save.chapter]) return checkChapterIntro();
   say([[giver, m ? m.hint + (m.type === 'hunt' ? ' So far: ' + Math.min(save.hunt, m.n) + ' of ' + m.n + '.' : '') : 'Be careful out there.'], ['', 'Your HP and SP are restored.']]);

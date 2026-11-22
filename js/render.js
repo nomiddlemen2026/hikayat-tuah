@@ -226,12 +226,12 @@ function renderEnding() {
   const s = UIS;
   ctx.fillStyle = `rgba(10,5,0,${Math.min(0.85, endingT * 0.5)})`; ctx.fillRect(0, 0, W, H);
   if (endingT < 0.8) return;
-  const fin = save.chapter >= 5;
-  txt(fin ? 'Hikayat Tuah: Tamat' : 'Keris Taming Sari', W / 2, H * 0.2, 26 * s, '#ffd54f', 'center');
-  txt(fin ? 'The Shadow King is defeated. Melaka and the Bunian are at peace.' : 'The five warriors of Melaka are united once more.', W / 2, H * 0.2 + 26 * s, 12 * s, '#fff', 'center', false);
+  const fin = save.chapter >= 5, bun = fin && !save.statesIntro, more = fin && !bun;
+  txt(bun ? 'Kota Bunian is Saved' : more ? 'Bersambung... To be continued' : 'Keris Taming Sari', W / 2, H * 0.2, 26 * s, '#ffd54f', 'center');
+  txt(bun ? 'The Shadow King is defeated. Melaka and the Bunian are at peace... for now.' : more ? 'Every state so far is safe. More states of Malaysia are coming soon.' : 'The five warriors of Melaka are united once more.', W / 2, H * 0.2 + 26 * s, 12 * s, '#fff', 'center', false);
   const order = ['jebat', 'lekir', 'tuah', 'lekiu', 'kasturi'];
   order.forEach((k, i) => { const x = W / 2 + (i - 2) * 70 * s, y = H * 0.62; ctx.save(); ctx.translate(x, y); ctx.scale(2.4 * s, 2.4 * s); drawHero(ctx, 0, 0, HEROES[k], Math.PI / 2, time, k === 'tuah' ? (fin ? 'kerisBunian' : 'taming') : 'keris', 0); ctx.restore(); txt(HEROES[k].name, x, y + 46 * s, 10 * s, HEROES[k].trim, 'center'); });
-  if (endingT > 2) txt(fin ? 'THE END  ·  Thank you for playing  ·  Tap to keep exploring' : 'Chapter 1 complete  ·  Tap to continue', W / 2, H - 20 * s, 12 * s, '#ffe082', 'center');
+  if (endingT > 2) txt(bun ? 'Chapter 4 complete  ·  Tap to continue' : more ? 'Thank you for playing  ·  Tap to keep exploring' : 'Chapter 1 complete  ·  Tap to continue', W / 2, H - 20 * s, 12 * s, '#ffe082', 'center');
 }
 function renderTitle() {
   const s = UIS;

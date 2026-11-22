@@ -46,10 +46,11 @@ function currentMission() {
   if (!save.taming) return MISSIONS[4];
   return 'done';
 }
-const curChapter = () => save.chapter >= 2 && save.chapter <= 4 ? CHAPTERS[save.chapter] : null;
+const curChapter = () => save.chapter >= 2 && (save.chapter < 5 || save.statesIntro) ? CHAPTERS[save.chapter] || null : null;
 const curMission = () => { const c = curChapter(); return c ? c.missions[save.ci] || null : null; };
 function objectiveText() {
-  if (save.chapter >= 5) return ['Hikayat Tuah: complete!', 'Sail anywhere with Pak Kemudi and keep training.'];
+  if (storyDone()) return ['To be continued...', 'More Malaysian states are coming soon. Sail anywhere with Pak Kemudi and keep training.'];
+  if (save.chapter >= 5 && !save.statesIntro) return ['A new journey', 'Talk to Pak Kemudi at the jetty.'];
   const ch = curChapter();
   if (ch) {
     const m = curMission();
@@ -64,7 +65,8 @@ function objectiveText() {
   return [m.title, save.bossDead[CAPTOR[m.id]] ? 'Free ' + HEROES[m.id].name + '!' : m.hint];
 }
 function objectivePos() {
-  if (!save.intro || save.chapter >= 5) return null;
+  if (!save.intro || storyDone()) return null;
+  if (save.chapter >= 5 && !save.statesIntro) return { x: MAPDEF.boat.x, y: MAPDEF.boat.y };
   const ch = curChapter();
   if (ch) {
     if (MAP !== ch.map) return { x: MAPDEF.boat.x, y: MAPDEF.boat.y };
@@ -88,7 +90,7 @@ function startGame(fresh) {
   if (solidAt(player.x, player.y)) { player.x = MAPDEF.respawn.x * TS; player.y = MAPDEF.respawn.y * TS; }
   player.hp = Math.min(player.hp, maxHp());
   player.sp = Math.min(save.sp != null ? save.sp : maxSp(), maxSp());
-  levelSkills(true);
+  levelSkills(true); ensureUnlocked();
   resetWorldState();
   setupWorld();
   gfx.onWorldReady();
@@ -119,7 +121,8 @@ function travelTo(id) {
 
 const npc = (name, x, y, talk, extra = {}) => ({ kind: 'npc', name, pal: NPC_PALS[name], x: x * TS, y: y * TS, talk, ...extra });
 function setupWorld() {
-  const CH = {
+  const SB = STATE_BY_MAP[MAP];
+  const CH = SB ? stateChests(SB) : {
     melaka: [[44.5, 58.5, 'keris', 'c_keris'], [75.5, 47.5, 'parang', 'c_parang'], [21.5, 60.5, 'lembing', 'c_lembing'], [38.5, 16.5, 'potion3', 'c_p1'], [25.5, 36.5, 'potion3', 'c_p2'], [30.5, 31.5, 'potion2', 'c_p3'], [89.5, 29.5, 'potion2', 'c_p4'], [60.5, 12.5, 'potion3', 'c_p5']],
     bendahara: [[20.5, 30.5, 'potion3', 'b_p1'], [72.5, 24.5, 'potion3', 'b_p2'], [88.5, 58.5, 'gold800', 'b_g1'], [8.5, 60.5, 'potion2', 'b_p3'], [33.5, 26.5, 'gold1200', 'b_g2']],
     naga: [[70.5, 36.5, 'potion3', 'n_p1'], [34.5, 30.5, 'potion3', 'n_p2'], [86.5, 36.5, 'gold1500', 'n_g1'], [55.5, 61.5, 'potion3', 'n_p3'], [60.5, 18.5, 'gold2500', 'n_g2']],
@@ -147,6 +150,8 @@ function setupWorld() {
     npcs.push(npc('Tok Penghulu', 54.5, 48.6, () => talkGiver('bendahara')), npc('Mak Limah', 55.5, 57.6, () => say([['Mak Limah', 'Fresh jamu and fine blades! What will it be?']], () => ui.openShop('bendahara', 'Mak Limah'))));
   } else if (MAP === 'naga') {
     npcs.push(npc('Syahbandar', 29.5, 50.6, () => talkGiver('naga')), npc('Nyonya Kim', 15.5, 56.6, () => say([['Nyonya Kim', 'Weapons from every port in the world. Gold only, no credit!']], () => ui.openShop('naga', 'Nyonya Kim'))));
+  } else if (SB) {
+    npcs.push(giverNpc(), npc(SB.shopkeeper, 57.5, 59.6, () => say([[SB.shopkeeper, 'Welcome, traveller from another time! Jamu and blades for the road.']], () => ui.openShop(MAP, SB.shopkeeper))));
   } else if (MAP === 'bunian') {
     npcs.push(npc('Puteri Bunian', 55.5, 50.6, () => talkGiver('bunian')), npc('Pedagang Bunian', 58.5, 57.6, () => say([['Pedagang Bunian', 'A human with gold? How curious. Our crystal craft is yours, for a price.']], () => ui.openShop('bunian', 'Pedagang Bunian'))));
   }
@@ -154,5 +159,12 @@ function setupWorld() {
   companions = ['jebat', 'lekir', 'lekiu', 'kasturi'].filter(k => save.found[k]).map((k, i) => ({ id: k, x: player.x, y: player.y, face: 0, walk: 0, moving: false, atkCd: rr(0, 1), atk: 0, idx: i }));
   for (const r in SPAWNS) for (let i = 0; i < SPAWNS[r].n; i++) trySpawn(r, true);
 }
+// the person who gives the missions on a state map changes with each chapter (era)
+function giverNpc() {
+  const SB = STATE_BY_MAP[MAP], ch = curChapter();
+  const name = ch && ch.map === MAP ? ch.giver : SB.host;
+  return npc(name, 55.5, 51.6, () => talkGiver(MAP), { giver: true });
+}
+function refreshGiver() { if (!STATE_BY_MAP[MAP]) return; npcs = npcs.filter(n => !n.giver); npcs.push(giverNpc()); }
 function openGate() { setT(80, 16, T.FLOOR); setT(81, 16, T.FLOOR); setT(82, 16, T.FLOOR); }
 function restoreParty() { player.hp = maxHp(); player.sp = maxSp(); }

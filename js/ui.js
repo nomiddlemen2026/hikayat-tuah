@@ -262,22 +262,27 @@ const ui = (() => {
   function rQuests() {
     const rows = [{ h: 'Chapter 1: Quest for the Keris Taming Sari' }, { t: 'Prologue: Find a Weapon', d: 'Open the chest beside your house in Kota Melaka.', done: save.prologue }];
     MISSIONS.forEach((m, i) => rows.push({ t: m.title, d: m.hint, done: i < 4 ? !!save.found[m.id] : !!save.taming }));
-    for (const n of [2, 3, 4]) {
-      const ch = CHAPTERS[n]; rows.push({ h: ch.title + (save.chapter < n ? ' (locked)' : '') });
-      if (save.chapter < n) continue;
+    const nums = Object.keys(CHAPTERS).map(Number).sort((a, b) => a - b);
+    let total = 6, done0 = 0;
+    for (const n of nums) {
+      const ch = CHAPTERS[n]; total += ch.missions.length;
+      if (save.chapter > n + 1 && n >= 5) { done0 += ch.missions.length; continue; } // older state chapters fold away
+      if (n >= 5 && ch.state && (n === ch.state.firstCh)) rows.push({ h: '— ' + ch.state.name + ' —' });
+      rows.push({ h: ch.title + (save.chapter < n ? ' (locked)' : '') });
+      if (save.chapter < n) { if (n > save.chapter + 1) break; continue; }
       ch.missions.forEach((m, i) => rows.push({ t: m.title, d: m.hint, done: save.chapter > n || i < save.ci }));
     }
     const cur = rows.findIndex(r => r.t && !r.done), cm = curMission();
-    const done = rows.filter(r => r.done).length, total = 6 + 12;
+    const done = rows.filter(r => r.done).length + done0;
     return `<div class="quests">${rows.map((r, i) => r.h ? `<div class="qh">${h(r.h)}</div>` : `<div class="q ${r.done ? 'done' : i === cur ? 'cur' : 'locked'}"><span class="st">${r.done ? '✔' : i === cur ? '▶' : '·'}</span><div><b>${h(r.t)}</b><p>${h(r.d)}${i === cur && cm && cm.type === 'hunt' ? ' (' + Math.min(save.hunt, cm.n) + '/' + cm.n + ')' : ''}</p></div></div>`).join('')}</div>
-      <div class="foot">Story ${done}/${total}<span class="sep"></span>Chapter ${Math.min(save.chapter, 4)}/4</div>`;
+      <div class="foot">Story ${done}/${total}<span class="sep"></span>Chapter ${Math.min(save.chapter, lastChapter())}/${lastChapter()}</div>`;
   }
   function rMap() { return `<canvas id="worldmap" width="384" height="288"></canvas><div class="foot"><b>${h(MAPDEF.name)}</b><span class="sep"></span>Red: you · White: objective · Blue: boatman · Orange: boss</div>`; }
   function rTravel() {
     const near = npcs.some(n => n.name === 'Pak Kemudi' && dist(n.x, n.y, player.x, player.y) < 80);
     const rows = MAP_ORDER.map(id => {
       const m = MAPS[id], has = save.unlocked.includes(id), here = id === MAP;
-      return `<div class="dest ${has ? '' : 'locked'} ${here ? 'here' : ''}"><div><b>${has ? h(m.name) : '???'}</b><small>Chapter ${m.chapter}${has ? '' : ' · locked'}</small></div>${here ? '<span class="tag">You are here</span>' : has ? `<button data-act="travel" data-arg="${id}" ${near ? '' : 'disabled'}>Sail</button>` : '<span class="tag">Locked</span>'}</div>`;
+      return `<div class="dest ${has ? '' : 'locked'} ${here ? 'here' : ''}"><div><b>${has ? h(m.name) : '???'}</b><small>${m.state ? 'State · Chapters ' + m.chapter + '-' + (m.chapter + 2) : 'Chapter ' + m.chapter}${has ? '' : ' · locked'}</small></div>${here ? '<span class="tag">You are here</span>' : has ? `<button data-act="travel" data-arg="${id}" ${near ? '' : 'disabled'}>Sail</button>` : '<span class="tag">Locked</span>'}</div>`;
     }).join('');
     return `<div class="travel">${rows}</div><div class="hint">${near ? 'Pak Kemudi will sail you to any place you have unlocked.' : 'Talk to Pak Kemudi at the jetty to sail.'}</div>`;
   }
