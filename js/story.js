@@ -163,6 +163,7 @@ function giveReward(r) {
     if (WEAPONS[r.weapon].dmg > WEAPONS[save.weapon].dmg) save.weapon = r.weapon;
     log('Obtained ' + WEAPONS[r.weapon].name + '.', 'item');
   }
+  if (r.potions) { save.potions += r.potions; log('Reward: ' + r.potions + ' Jamu potions.', 'item'); }
   if (r.gold) { save.gold += r.gold; log('Reward: ' + r.gold.toLocaleString() + ' ' + CURRENCY + '.', 'item'); }
   if (r.unlock && !save.unlocked.includes(r.unlock)) { save.unlocked.push(r.unlock); log('New destination for Pak Kemudi: ' + MAPS[r.unlock].name + '.', 'sys'); }
   gainXP(Math.round(xpNeed(save.lvl) * 0.25));
