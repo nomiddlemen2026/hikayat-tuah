@@ -49,7 +49,7 @@ function currentMission() {
 const curChapter = () => save.chapter >= 2 && (save.chapter < 5 || save.statesIntro) ? CHAPTERS[save.chapter] || null : null;
 const curMission = () => { const c = curChapter(); return c ? c.missions[save.ci] || null : null; };
 function objectiveText() {
-  if (storyDone()) return ['To be continued...', 'More Malaysian states are coming soon. Sail anywhere with Pak Kemudi and keep training.'];
+  if (storyDone()) return ['Hikayat Tuah: Tamat', 'Every state of Malaysia is safe. Sail anywhere with Pak Kemudi and keep training.'];
   if (save.chapter >= 5 && !save.statesIntro) return ['A new journey', 'Talk to Pak Kemudi at the jetty.'];
   const ch = curChapter();
   if (ch) {

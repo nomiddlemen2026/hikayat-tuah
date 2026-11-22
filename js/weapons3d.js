@@ -111,6 +111,7 @@ const weapons3d = (() => {
     sundang: (g, w) => keris(g, w, 0.5, 5, 1.45),
     kerisBunian: (g, w) => keris(g, w, 0.44, 9, 1.1),
     kerisPanjang: (g, w) => keris(g, w, 0.56, 0, 0.95),
+    kerisWarisan: (g, w) => keris(g, w, 0.5, 13, 1.25),
     parang: (g, w) => { // broad jungle parang, the blade widens toward the tip
       woodHilt(g, 0.14, '#4e2c14', { bend: 2 });
       single(g, w, 0.4, f => 0.014 - 0.004 * f, f => -(0.026 + 0.032 * Math.pow(f, 1.4)), [0.43, -0.03]);

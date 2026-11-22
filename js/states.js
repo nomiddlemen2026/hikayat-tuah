@@ -30,6 +30,7 @@ const BIOME = {
   plantation: { fog: '#b8d0b0', relief: [0.3, 6], foes: ['askar', 'babi'] },
   lake: { fog: '#b8d8e0', relief: [0.1, 5], foes: ['buaya', 'hantu'] },
   cave: { fog: '#5a5060', near: 9, far: 24, relief: [1.2, 5], rocky: true, dark: true, foes: ['hantu', 'gergasi'] },
+  city: { fog: '#d8d4cc', relief: [0, 1], foes: ['askar', 'pemanah'] },
 };
 // creature templates; stats grow with the state's tier
 const FOE = {
@@ -45,7 +46,7 @@ const FOE = {
 const SHADOW_PAL = (trim, sampin) => ({ baju: '#1c1826', sampin: sampin || '#2e2640', tanjak: '#120e1c', trim: trim || '#7c4dff', skin: '#4a4060' });
 
 // ---------------------------------------------------------------- the states (batch 1: Melaka, Negeri Sembilan, Johor, Pahang; batch 2: Terengganu, Kelantan, Perlis, Kedah;
-// batch 3: Pulau Pinang, Perak, Selangor, Labuan)
+// batch 3: Pulau Pinang, Perak, Selangor, Labuan; batch 4: Sabah, Sarawak, Putrajaya, Kuala Lumpur)
 const STATES = [
   {
     id: 'melaka', name: 'Melaka', town: 'Bandar Melaka', palace: 'Istana Kesultanan', style: null,
@@ -749,6 +750,241 @@ const STATES = [
       },
     ],
   },
+  {
+    id: 'sabah', name: 'Sabah', town: 'Kota Kinabalu', palace: 'Rumah Besar', style: 'port',
+    host: 'Ketua Kampung Likas', shopkeeper: 'Inah', shop: ['jamu', 'tombakBenderang', 'sewar', 'badik'], trim: '#ff7043',
+    areas: {
+      nw: { name: 'Pulau Sipadan', biome: 'beach' },
+      n: { name: 'Gunung Kinabalu', biome: 'highland', landmark: 'shrine' },
+      ne: { name: 'Sungai Kinabatangan', biome: 'swamp' },
+      sw: { name: 'Sawah Tambunan', biome: 'paddy', landmark: 'shrine' },
+      se: { name: 'Hutan Danum', biome: 'jungle' },
+    },
+    chapters: [
+      {
+        title: 'The Sacred Mountain', era: 'ancient belief', giver: 'Bobohizan', pal: { female: true, baju: '#1a1a1a', sampin: '#c62828', tanjak: '#ffd54f', trim: '#ffd54f', skin: '#c99062' },
+        intro: [['', 'The mist sails across the sea to the land below the wind: Sabah, in northern Borneo. Above it towers Gunung Kinabalu.'],
+          ['Bobohizan', 'I am a bobohizan, a priestess of the Kadazan Dusun. For us, Kinabalu is sacred. It is where the spirits of our ancestors rest.'],
+          ['Bobohizan', 'The Bayang Masa have climbed the mountain and twisted a guardian spirit into something cruel. The ancestors cannot rest.'],
+          ['Hang Tuah', 'Then we climb with respect, and we set the guardian free.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 16, title: 'The Slopes of Kinabalu', hint: 'Defeat 16 creatures on Gunung Kinabalu (north).', reward: { gold: 76000 },
+            done: [['Bobohizan', 'The mountain breathes easier. The guardian waits at the shrine near the peak.']] },
+          { type: 'boss', area: 'n', title: 'Roh Penjaga Kinabalu', hint: 'Free the guardian spirit at the shrine on Gunung Kinabalu.', reward: { potions: 10, gold: 80000 },
+            boss: { name: 'Roh Penjaga Kinabalu', look: 'guardian', fly: true, col: { robe: '#1e2a3a', head: '#0e141c', gold: '#ff7043', eye: '#ffeb3b', aura: '#80deea' }, scale: 1.8, moves: ['ring', 'pounce', 'summon', 'ring', 'knives'], summon: 'beruang' },
+            done: [['Bobohizan', 'The guardian is itself again. The ancestors are at peace.'],
+              ['', 'Gunung Kinabalu, 4,095 m, is the highest mountain in Malaysia, and Kinabalu Park is a UNESCO World Heritage Site.']] },
+        ],
+      },
+      {
+        title: 'Kaamatan', era: 'harvest festival', giver: 'Ketua Kampung Tambunan',
+        intro: [['Ketua Kampung Tambunan', 'Welcome to Tambunan, Laksamana! Every May we celebrate Kaamatan, the harvest festival, to thank the rice spirit, Bambaazon.'],
+          ['Ketua Kampung Tambunan', 'There will be sumazau dancing, music of gongs, and the Unduk Ngadau pageant. But shadow beasts are trampling the fields before the harvest.'],
+          ['Hang Lekir', 'No harvest, no festival. We cannot let that happen.']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 16, title: 'Guard the Tambunan Fields', hint: 'Defeat 16 creatures in Sawah Tambunan (south-west).', reward: { gold: 80000 },
+            done: [['Ketua Kampung Tambunan', 'The rice is safe! But their leader is still loose near the shrine of the rice spirit.']] },
+          { type: 'boss', area: 'sw', title: 'Babi Raja Tambunan', hint: 'Defeat the giant shadow boar at the shrine in Sawah Tambunan.', reward: { potions: 10, gold: 84000 },
+            boss: { name: 'Babi Raja Tambunan', look: 'boar', col: { body: '#2a1e18', head: '#3a2a20', mane: '#ff7043' }, scale: 2.2, moves: ['charge', 'spin', 'charge', 'summon'], summon: 'babi' },
+            done: [['', 'The gongs ring out and the sumazau begins, dancers moving their arms like birds in flight.'],
+              ['', 'Kaamatan is celebrated across Sabah every May, a thanksgiving for the rice harvest.']] },
+        ],
+      },
+      {
+        title: 'Mat Salleh', era: '1894 to 1900', giver: 'Mat Salleh',
+        intro: [['', 'The mist moves to the 1890s. A trading company now rules North Borneo and taxes its peoples heavily.'],
+          ['Mat Salleh', 'I am Datu Muhammad Salleh. People call me Mat Salleh. I have risen against the company\'s rule and built forts across this land.'],
+          ['Mat Salleh', 'The Bayang Masa want my people\'s stand forgotten. They have sent a great crocodile to the Kinabatangan to cut us off.'],
+          ['Hang Jebat', 'A fighter after my own heart. Leave the crocodile to us, Datu.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 17, title: 'The Kinabatangan River', hint: 'Defeat 17 creatures along Sungai Kinabatangan (north-east).', reward: { gold: 84000 },
+            done: [['Mat Salleh', 'The river is clear. The great crocodile waits in the deep bend.']] },
+          { type: 'boss', area: 'ne', title: 'Buaya Raja Kinabatangan', hint: 'Defeat the giant crocodile in Sungai Kinabatangan.', reward: { weapon: 'kampilan' },
+            boss: { name: 'Buaya Raja Kinabatangan', look: 'croc', col: { skin: '#3a3a26', ridge: '#ff7043' }, scale: 2.5, moves: ['charge', 'spin', 'charge', 'ring', 'summon'], summon: 'buaya' },
+            done: [['Mat Salleh', 'Take this kampilan, the great sword of our coasts. Swing it for justice.'],
+              ['', 'You obtained the Kampilan! History safe: Mat Salleh fell at Tambunan in 1900. A memorial stands there today, and he is remembered as a hero of Sabah.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'sarawak', name: 'Sarawak', town: 'Kuching', palace: 'Astana', style: 'kampung',
+    host: 'Tok Penghulu Kuching', shopkeeper: 'Mak Dayang', shop: ['jamu', 'kampilan', 'tombakBenderang', 'sewar'], trim: '#ffeb3b',
+    areas: {
+      nw: { name: 'Gua Niah', biome: 'cave', landmark: 'shrine' },
+      n: { name: 'Gunung Santubong', biome: 'highland', landmark: 'shrine' },
+      ne: { name: 'Rumah Panjang Batang Ai', biome: 'jungle', landmark: 'shrine' },
+      sw: { name: 'Paya Bako', biome: 'swamp' },
+      se: { name: 'Hutan Mulu', biome: 'jungle' },
+    },
+    chapters: [
+      {
+        title: 'The Deep Skull of Niah', era: '40,000 years ago', giver: 'Pemburu Niah',
+        intro: [['', 'The mist sails into the deepest past of all: forty thousand years ago, to a vast cave in Sarawak.'],
+          ['Pemburu Niah', 'You walk like people, but you shine like spirits! We hunt in this forest and shelter in this great cave.'],
+          ['Pemburu Niah', 'A shadow spirit has come into the cave. It wants to swallow us, so that no one will ever know we lived here.'],
+          ['Hang Kasturi', 'Forty thousand years... these may be the first people of all. We will not let them be forgotten.']],
+        missions: [
+          { type: 'hunt', area: 'nw', n: 17, title: 'The Great Cave', hint: 'Defeat 17 creatures in Gua Niah (north-west).', reward: { gold: 86000 },
+            done: [['Pemburu Niah', 'The cave is calm. The spirit hides deep inside, by our sacred stones.']] },
+          { type: 'boss', area: 'nw', title: 'Roh Gua Niah', hint: 'Defeat the shadow spirit at the sacred stones in Gua Niah.', reward: { potions: 10, gold: 90000 },
+            boss: { name: 'Roh Gua Niah', look: 'wisp', fly: true, col: { shell: '#5d4037', core: '#ffeb3b' }, scale: 2.5, moves: ['ring', 'knives', 'ring', 'summon'], summon: 'hantu', orbs: 'fire' },
+            done: [['Pemburu Niah', 'We are safe. Go well, shining strangers.'],
+              ['', 'History safe: in 1958 archaeologists found the Deep Skull in the Niah Caves, about 40,000 years old, among the oldest modern human remains in South-East Asia.']] },
+        ],
+      },
+      {
+        title: 'The Princesses of Santubong', era: 'legend', giver: 'Tok Penglipur Lara',
+        intro: [['Tok Penglipur Lara', 'Sit, sit, Laksamana. I am a storyteller. Look at that mountain by the sea: Gunung Santubong.'],
+          ['Tok Penglipur Lara', 'Long ago two heavenly princesses, Santubong and Sejinjang, lived here in peace, until they quarrelled over a prince. They were cursed and turned into mountains.'],
+          ['Tok Penglipur Lara', 'Now the Bayang Masa have woken that old curse. It walks the mountain, turning everyone it meets against each other.'],
+          ['Hang Lekiu', 'A curse born from a quarrel. Let us end it before it starts another one.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 17, title: 'The Slopes of Santubong', hint: 'Defeat 17 creatures on Gunung Santubong (north).', reward: { gold: 90000 },
+            done: [['Tok Penglipur Lara', 'Good! The curse itself waits at the shrine on the mountain.']] },
+          { type: 'boss', area: 'n', title: 'Sumpahan Santubong', hint: 'Break the curse at the shrine on Gunung Santubong.', reward: { potions: 10, gold: 94000 },
+            boss: { name: 'Sumpahan Santubong', look: 'guardian', fly: true, col: { robe: '#4a148c', head: '#1a0a2a', gold: '#ffeb3b', eye: '#ff4081', aura: '#e040fb' }, scale: 1.8, moves: ['ring', 'pounce', 'knives', 'ring', 'summon'], summon: 'harimau' },
+            done: [['Tok Penglipur Lara', 'The curse is broken, but the mountains stay, so we always remember what quarrels cost.'],
+              ['', 'The legend of Puteri Santubong is one of Sarawak\'s best-loved stories, and it has its own famous song.']] },
+        ],
+      },
+      {
+        title: 'The Longhouse', era: 'Iban tradition', giver: 'Tuai Rumah',
+        intro: [['', 'The mist brings you up the Batang Ai river to an Iban longhouse: a whole village under one long roof.'],
+          ['Tuai Rumah', 'I am the tuai rumah, chief of this longhouse. Fifty families live here, each with a door onto one shared gallery, the ruai.'],
+          ['Tuai Rumah', 'Soon it will be Gawai, our harvest festival, with tuak and ngajat dances. But a shadow clouded leopard is stalking the forest paths.'],
+          ['Hang Tuah', 'A whole village under one roof. That is a home worth defending.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 17, title: 'The Forest Paths', hint: 'Defeat 17 creatures around Rumah Panjang Batang Ai (north-east).', reward: { gold: 94000 },
+            done: [['Tuai Rumah', 'The paths are safe. The leopard waits near our shrine.']] },
+          { type: 'boss', area: 'ne', title: 'Harimau Dahan Bayang', hint: 'Defeat the shadow clouded leopard by the longhouse shrine.', reward: { weapon: 'mandau' },
+            boss: { name: 'Harimau Dahan Bayang', look: 'tiger', col: { fur: '#8a8270', stripe: '#1a1620' }, scale: 1.9, moves: ['pounce', 'pounce', 'spin', 'summon'], summon: 'harimau' },
+            done: [['Tuai Rumah', 'You fight like a true Iban warrior. Take this mandau, and join us for Gawai!'],
+              ['', 'You obtained the Mandau Dayak! Gawai Dayak is celebrated across Sarawak on 1 June every year.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'putrajaya', name: 'Putrajaya', town: 'Presint 1', palace: 'Perdana Putra', style: null,
+    host: 'Penjawat Awam', shopkeeper: 'Encik Farid', shop: ['jamu', 'mandau', 'kampilan', 'tombakBenderang'], trim: '#90caf9',
+    areas: {
+      nw: { name: 'Taman Botani', biome: 'forest' },
+      n: { name: 'Tasik Putrajaya', biome: 'lake', landmark: 'lake' },
+      ne: { name: 'Taman Wetland', biome: 'swamp' },
+      sw: { name: 'Ladang Prang Besar', biome: 'plantation' },
+      se: { name: 'Bukit Presint', biome: 'hill' },
+    },
+    chapters: [
+      {
+        title: 'From Rubber Estate to City', era: '1995 to 1999', giver: 'Arkitek Aminah', pal: { female: true, baju: '#90caf9', sampin: '#1565c0', tanjak: '#e3f2fd', trim: '#ffffff', skin: '#d2a070' },
+        intro: [['', 'The mist sails into recent times: 1995. On an old rubber estate called Prang Besar, a brand new city is being planned.'],
+          ['Arkitek Aminah', 'Welcome, Laksamana! I am one of the architects. Here we will build Putrajaya, the new home of the federal government.'],
+          ['Arkitek Aminah', 'But shadows have come out of the old rubber trees. They want the city never to be built.'],
+          ['Hang Jebat', 'Even the future needs guarding, it seems.']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 17, title: 'The Old Estate', hint: 'Defeat 17 creatures in Ladang Prang Besar (south-west).', reward: { gold: 96000 },
+            done: [['Arkitek Aminah', 'The surveyors can work again. But something big is moving among the old trees.']] },
+          { type: 'boss', area: 'sw', title: 'Gergasi Getah Tua', hint: 'Defeat the old rubber giant in Ladang Prang Besar.', reward: { potions: 10, gold: 100000 },
+            boss: { name: 'Gergasi Getah Tua', look: 'golem', col: { body: '#5a4a3a', head: '#6d5a48', limb: '#4a3a2a', eye: '#90caf9', moss: '#e8e2d0' }, scale: 2.3, moves: ['charge', 'spin', 'ring', 'summon'], summon: 'askar' },
+            done: [['Arkitek Aminah', 'Now we can build. In 1999 the Prime Minister\'s office will move here.'],
+              ['', 'History safe: Putrajaya became the federal administrative centre of Malaysia in 1999, and a Federal Territory in 2001.']] },
+        ],
+      },
+      {
+        title: 'The Wetland of Birds', era: '1997 to today', giver: 'Arkitek Aminah',
+        intro: [['Arkitek Aminah', 'Putrajaya is a garden city. We have built wetlands to clean the water before it reaches the lake, and birds have come from everywhere.'],
+          ['Arkitek Aminah', 'But a shadow heron as big as a house is hunting the wetlands. The birds are fleeing.'],
+          ['Hang Lekir', 'A giant heron. Of course it is.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 17, title: 'The Wetland Paths', hint: 'Defeat 17 creatures in Taman Wetland (north-east).', reward: { gold: 100000 },
+            done: [['Arkitek Aminah', 'The birds are coming back. The heron is somewhere deeper in the marsh.']] },
+          { type: 'boss', area: 'ne', title: 'Bangau Bayang', hint: 'Defeat the giant shadow heron in Taman Wetland.', reward: { potions: 10, gold: 104000 },
+            boss: { name: 'Bangau Bayang', look: 'guardian', fly: true, col: { robe: '#eceff1', head: '#263238', gold: '#ffca28', eye: '#ff1744', aura: '#90caf9' }, scale: 1.8, moves: ['pounce', 'ring', 'pounce', 'knives', 'summon'], summon: 'hantu' },
+            done: [['Arkitek Aminah', 'Listen to them sing! The wetlands are alive.'],
+              ['', 'Putrajaya Wetlands is one of the largest man-made freshwater wetlands in the tropics.']] },
+        ],
+      },
+      {
+        title: 'The Lake of Bridges', era: 'today', giver: 'Penjawat Awam',
+        intro: [['Penjawat Awam', 'Laksamana, our city sits around a great lake, crossed by beautiful bridges. The pink-domed Putra Mosque stands on its shore.'],
+          ['Penjawat Awam', 'Something old has crawled into the new lake: a shadow dragon. It rises from the water at the island in the middle.'],
+          ['Hang Tuah', 'We have fought dragons in Pahang and Kedah. One more will not stop us.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 17, title: 'The Lakeshore', hint: 'Defeat 17 creatures around Tasik Putrajaya (north).', reward: { gold: 104000 },
+            done: [['Penjawat Awam', 'The shore is safe. The dragon waits on the island.']] },
+          { type: 'boss', area: 'n', title: 'Naga Tasik Bayang', hint: 'Defeat the shadow dragon on the island in Tasik Putrajaya.', reward: { potions: 15, gold: 110000 },
+            boss: { name: 'Naga Tasik Bayang', look: 'croc', col: { skin: '#1e3a5a', ridge: '#90caf9', horns: true }, scale: 2.5, moves: ['ring', 'charge', 'spin', 'knives', 'summon'], summon: 'buaya', orbs: true },
+            done: [['Penjawat Awam', 'The lake is calm. One last journey remains, Laksamana: Kuala Lumpur, and the day this nation was born.'],
+              ['', 'Pak Kemudi can now sail to Kuala Lumpur for the final chapters.']] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'kl', name: 'Kuala Lumpur', town: 'Kuala Lumpur', palace: 'Bangunan Sultan Abdul Samad', style: null,
+    host: 'Tok Penghulu Kuala Lumpur', shopkeeper: 'Uncle Lim', shop: ['jamu', 'mandau', 'kampilan', 'tombakBenderang'], trim: '#ffd54f',
+    areas: {
+      nw: { name: 'Bukit Nanas', biome: 'forest' },
+      n: { name: 'Lombong Ampang', biome: 'mine' },
+      ne: { name: 'Kuala Sungai Gombak', biome: 'swamp', landmark: 'shrine' },
+      sw: { name: 'Dataran Merdeka', biome: 'city', landmark: 'shrine' },
+      se: { name: 'Stadium Merdeka', biome: 'city', landmark: 'fort' },
+    },
+    chapters: [
+      {
+        title: 'The Muddy Confluence', era: '1857 to 1880s', giver: 'Yap Ah Loy',
+        intro: [['', 'The mist sails up the Klang River to 1857, where it meets the Gombak. Tin miners have just arrived in the jungle here.'],
+          ['Yap Ah Loy', 'This place has no name yet, so the miners call it Kuala Lumpur: the muddy confluence. I am Yap Ah Loy, Kapitan Cina of this town.'],
+          ['Yap Ah Loy', 'Fires, floods and wars have burned it down again and again, but we keep rebuilding in brick. Now a mud dragon rises from the Ampang mines!'],
+          ['Hang Tuah', 'A muddy village that will become a capital. We will make sure it gets the chance.']],
+        missions: [
+          { type: 'hunt', area: 'n', n: 18, title: 'The Ampang Tin Mines', hint: 'Defeat 18 creatures at Lombong Ampang (north).', reward: { gold: 110000 },
+            done: [['Yap Ah Loy', 'The miners are safe. The dragon waits in the deepest pit.']] },
+          { type: 'boss', area: 'n', title: 'Naga Lumpur', hint: 'Defeat the mud dragon at Lombong Ampang.', reward: { potions: 15, gold: 116000 },
+            boss: { name: 'Naga Lumpur', look: 'croc', col: { skin: '#5d4a32', ridge: '#ffd54f', horns: true }, scale: 2.6, moves: ['ring', 'charge', 'spin', 'knives', 'summon'], summon: 'gergasi', orbs: 'fire' },
+            done: [['Yap Ah Loy', 'Kuala Lumpur will grow. In 1896 it will become the capital of the Federated Malay States.'],
+              ['', 'History safe: Kuala Lumpur grew from a tin-mining village at the meeting of the Klang and Gombak rivers into Malaysia\'s capital.']] },
+        ],
+      },
+      {
+        title: 'Merdeka!', era: '31 August 1957', giver: 'Tunku Abdul Rahman',
+        intro: [['', 'The mist brings you to the night of 30 August 1957, on the padang in front of the Sultan Abdul Samad Building.'],
+          ['Tunku Abdul Rahman', 'Laksamana Tuah! I have heard stories of you all my life. Tonight, at midnight, the Union Jack comes down and our own flag goes up.'],
+          ['Tunku Abdul Rahman', 'Tomorrow at Stadium Merdeka I will declare that the Federation of Malaya is independent. But the shadows have come in force to stop it.'],
+          ['Hang Jebat', 'Hundreds of years of history have been leading to this. Let us finish it, brothers!']],
+        missions: [
+          { type: 'hunt', area: 'sw', n: 18, title: 'Midnight on the Padang', hint: 'Defeat 18 shadows on Dataran Merdeka (south-west) before midnight.', reward: { gold: 120000 },
+            done: [['', 'The clock strikes midnight. The new flag of Malaya rises over the padang as the crowd cheers.'],
+              ['Tunku Abdul Rahman', 'Now to the stadium! But the shadow lord himself is waiting there.']] },
+          { type: 'boss', area: 'se', title: 'Raja Bayang Masa', hint: 'Defeat the Lord of the Time Shadows at Stadium Merdeka (south-east).', reward: { skill: 'naga' },
+            boss: { name: 'Raja Bayang Masa', look: 'guardian', fly: true, col: { robe: '#0e0a1a', head: '#05030a', gold: '#ffd54f', eye: '#ff1744', aura: '#7c4dff' }, scale: 2.1, moves: ['ring', 'pounce', 'summon', 'knives', 'ring', 'spin'], summon: 'askar' },
+            done: [['', 'The morning of 31 August 1957. The stadium is full. Tunku Abdul Rahman raises his hand and cries out, seven times:'],
+              ['Tunku Abdul Rahman', 'MERDEKA! MERDEKA! MERDEKA! MERDEKA! MERDEKA! MERDEKA! MERDEKA!'],
+              ['', 'The fire of the old dragons answers your courage. You learned the ultimate skill Nafas Naga!']] },
+        ],
+      },
+      {
+        title: 'Malaysia Day', era: '16 September 1963', giver: 'Tunku Abdul Rahman',
+        intro: [['', 'The mist moves six years on, to 16 September 1963.'],
+          ['Tunku Abdul Rahman', 'Today Malaya, Sabah, Sarawak and Singapore join together as one new nation: Malaysia.'],
+          ['Tunku Abdul Rahman', 'You have walked through every one of these lands, Laksamana. You know better than anyone what this union means.'],
+          ['Tunku Abdul Rahman', 'But the very last of the Bayang Masa has gathered all its strength at the river confluence. It wants to tear the new nation apart.'],
+          ['Hang Tuah', 'Brothers. One last fight, for all the states at once.']],
+        missions: [
+          { type: 'hunt', area: 'ne', n: 20, title: 'The Gathering Shadows', hint: 'Defeat 20 shadows at Kuala Sungai Gombak (north-east).', reward: { gold: 130000 },
+            done: [['Hang Kasturi', 'They are breaking! There, at the confluence: the last shadow!']] },
+          { type: 'boss', area: 'ne', title: 'Bayang Masa Terakhir', hint: 'Defeat the last Time Shadow at the shrine of Kuala Sungai Gombak.', reward: { weapon: 'kerisWarisan', gold: 200000 },
+            boss: { name: 'Bayang Masa Terakhir', look: 'guardian', fly: true, col: { robe: '#000000', head: '#000000', gold: '#e040fb', eye: '#ffffff', aura: '#e040fb' }, scale: 2.4, moves: ['ring', 'pounce', 'summon', 'knives', 'ring', 'spin', 'summon'], summon: 'hantu' },
+            done: [['', 'The last shadow shatters into light. Across every state, from Perlis to Sabah, the river of time flows clear.'],
+              ['Puteri Bunian', 'You did it, Laksamana. The history of these lands is safe. My people forged this keris from the light of every state you saved.'],
+              ['', 'You obtained the Keris Panca Warisan, the Keris of Heritage!'],
+              ['Hang Tuah', '"Takkan Melayu hilang di dunia." And now, this nation will not be lost either. Let us go home, brothers.'],
+              ['', 'History safe: Malaysia was formed on 16 September 1963. Singapore left in 1965. Malaysia Day is celebrated every year on 16 September.']] },
+        ],
+      },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------- build maps, enemies and chapters from STATES
@@ -822,6 +1058,7 @@ function biomeTile(b, x, y, n, h) {
     case 'plantation': return (x % 3 === 0 && y % 3 === 0 && h < 0.9) ? T.TREE : (h > 0.96 ? T.FLOWER : T.GRASS);
     case 'lake': return h < 0.06 ? T.TREE : (h > 0.9 ? T.FLOWER : T.GRASS);
     case 'cave': return n > 0.6 || h < 0.07 ? T.ROCK : T.ASH;
+    case 'city': return (x % 6 === 0 && y % 6 === 0) ? T.TREE : (h > 0.96 ? T.FLOWER : (x % 6 === 3 || y % 6 === 3 ? T.PATH : T.FLOOR));
   }
   return T.GRASS;
 }
@@ -842,7 +1079,7 @@ function genState(s) {
   // landmarks and clearings at each area's site
   for (const k in s.areas) {
     const a = s.areas[k], st = SLOT[k].site, b = a.biome;
-    const ground = { jungle: T.DARK, forest: T.GRASS, hill: T.DIRT, swamp: T.SWAMP, beach: T.SAND, paddy: T.GRASS, mine: T.DIRT, ruins: T.DARK, highland: T.GRASS, plantation: T.GRASS, lake: T.GRASS, cave: T.ASH }[b] || T.GRASS;
+    const ground = { jungle: T.DARK, forest: T.GRASS, hill: T.DIRT, swamp: T.SWAMP, beach: T.SAND, paddy: T.GRASS, mine: T.DIRT, ruins: T.DARK, highland: T.GRASS, plantation: T.GRASS, lake: T.GRASS, cave: T.ASH, city: T.FLOOR }[b] || T.GRASS;
     if (a.landmark === 'lake') { clearDisc(st.x, st.y, 10, T.WATER); clearDisc(st.x, st.y, 4, T.GRASS); for (let y = st.y + 4; y <= st.y + 11; y++) { setT(st.x, y, T.BRIDGE); setT(st.x + 1, y, T.BRIDGE); } }
     else clearDisc(st.x, st.y, 6, ground);
     if (a.landmark === 'fort') { // a walled fortress with a gate facing the town

@@ -31,6 +31,7 @@ const WEAPONS = {
   tombakBenderang: { name: 'Tombak Benderang', dmg: 375, range: 70, arc: 1.0, cd: 0.4, rarity: 'epic', type: 'spear', model: 'benderang', blade: '#e8eaec', tassel: '#ffd600', desc: 'The royal banner spear of Perak, carried before the Sultan.' },
   kampilan: { name: 'Kampilan', dmg: 440, range: 60, arc: 2.8, cd: 0.48, rarity: 'epic', type: 'blade', model: 'kampilan', blade: '#d8dee2', desc: 'The great two-handed sword of the Iranun warriors of Sabah. Huge sweeping arcs.' },
   mandau: { name: 'Mandau Dayak', dmg: 465, range: 48, arc: 2.6, cd: 0.36, rarity: 'legendary', type: 'blade', model: 'mandau', blade: '#dfe5e8', desc: 'The headhunter sword of the Dayak of Sarawak, its antler hilt hung with hair tufts.' },
+  kerisWarisan: { name: 'Keris Panca Warisan', dmg: 620, range: 56, arc: 2.8, cd: 0.28, rarity: 'legendary', type: 'keris', model: 'kerisWarisan', blade: '#fff3c4', glow: '#ffd54f', story: true, desc: 'The Keris of Heritage, forged by the Bunian from the light of every Malaysian state you saved.' },
 };
 const weaponValue = id => WEAPONS[id].price || WEAPONS[id].dmg * 25;
 
