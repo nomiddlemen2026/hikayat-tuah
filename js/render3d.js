@@ -6,6 +6,8 @@
 
 const gfx = (() => {
   const api = { ok: false, yaw: 0 };
+  // Detail: 'high' = realistic scenery models and a smooth, finer ground; 'low' = the light block scenery
+  let detail = 'high'; try { detail = localStorage.getItem('hikayat_tuah_detail') || 'high'; } catch (e) { }
   if (typeof THREE === 'undefined') return api;
   let renderer, scene, camera, glCanvas, groundMesh, waterMesh, gateMesh, shadowMesh, particles, altarKeris, chestMeshes = [], worldGroup, shieldMesh, lavaMat;
   let pitch = 1.0, dist = 15, wantDist = 15, yaw = 0, lastT = 0;
@@ -27,7 +29,7 @@ const gfx = (() => {
   function syncSilhouette(m) {
     if (!sil || silWid !== m.userData.wid) {
       if (sil) scene.remove(sil);
-      sil = m.clone(true); silSrc = []; silDst = []; silWid = m.userData.wid;
+      const ud = m.userData; m.userData = {}; sil = m.clone(true); m.userData = ud; silSrc = []; silDst = []; silWid = m.userData.wid;
       m.traverse(o => silSrc.push(o)); sil.traverse(o => { silDst.push(o); if (o.isMesh) { o.material = SIL; o.renderOrder = 1; } });
       scene.add(sil);
     }
@@ -103,7 +105,7 @@ const gfx = (() => {
 
   // ---------- world construction
   function groundTexture() {
-    const S = 16, cvs = mk(MW * S, MH * S, g => {
+    const hi = detail === 'high', S = hi ? 24 : 16, cvs = mk(MW * S, MH * S, g => {
       g.imageSmoothingEnabled = false;
       const base = { [T.TREE]: T.GRASS, [T.JTREE]: T.DARK, [T.ROCK]: MAP === 'naga' ? T.ASH : T.DIRT, [T.PALM]: T.SAND, [T.MANGROVE]: T.SWAMP, [T.BLD]: MAP === 'bunian' ? T.MARBLE : T.DIRT, [T.WALL]: T.FLOOR, [T.PILLAR]: T.FLOOR, [T.GATE]: T.FLOOR, [T.CRYSTAL]: T.MOSS };
       for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
@@ -111,9 +113,13 @@ const gfx = (() => {
         const spr = t === T.WATER ? waterSprite(false, 0) : t === T.DEEP ? waterSprite(true, 0) : tileSprite(t, Math.floor(hash(x, y, 11) * 3));
         g.drawImage(spr, x * S, y * S, S, S);
       }
+      if (hi) { // soften the tile seams so the ground reads as one surface, then add fine grain
+        g.globalAlpha = 0.55; g.filter = 'blur(' + Math.round(S * 0.18) + 'px)'; g.drawImage(g.canvas, 0, 0); g.filter = 'none'; g.globalAlpha = 1;
+        for (let i = 0; i < MW * MH * 6; i++) { const px = Math.random() * MW * S, py = Math.random() * MH * S; g.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.06)'; g.fillRect(px, py, 2, 2); }
+      }
     });
     const tex = new THREE.CanvasTexture(cvs);
-    tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = detail === 'high' ? THREE.LinearFilter : THREE.NearestFilter; tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
     return tex;
   }
@@ -130,11 +136,14 @@ const gfx = (() => {
     floor.rotation.x = -Math.PI / 2; floor.position.set(MW / 2, -0.6, MH / 2); worldGroup.add(floor);
   }
   // Instanced props are split into 16x16-tile chunks so off-screen chunks are skipped (frustum culling).
-  function instanced(geo, mat, items, set) {
-    const chunks = {};
-    for (const it of items) { const k = Math.floor(it.x / 16) + ',' + Math.floor(it.z / 16); (chunks[k] = chunks[k] || []).push(it); }
+  // lod: 'hi' meshes show only near the player, 'lo' stand-ins only further away (see updateLod)
+  let lodMeshes = [];
+  function instanced(geo, mat, items, set, opts = {}) {
+    const chunks = {}, C = opts.chunk || 16;
+    for (const it of items) { const k = Math.floor(it.x / C) + ',' + Math.floor(it.z / C); (chunks[k] = chunks[k] || []).push(it); }
     for (const k in chunks) {
       const list = chunks[k], m = new THREE.InstancedMesh(geo, mat, list.length);
+      if (opts.lod) { const [cx, cz] = k.split(',').map(Number); m.userData.lod = opts.lod; m.userData.cx = (cx + 0.5) * C; m.userData.cz = (cz + 0.5) * C; lodMeshes.push(m); }
       list.forEach((it, i) => { set(it, tmpM, _c); m.setMatrixAt(i, tmpM); m.setColorAt(i, _c); });
       m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
       m.computeBoundingSphere(); worldGroup.add(m);
@@ -154,15 +163,51 @@ const gfx = (() => {
     const trunk = new THREE.CylinderGeometry(0.07, 0.12, 0.8, 5).translate(0, 0.4, 0);
     const crown = new THREE.IcosahedronGeometry(0.55, 0).translate(0, 1.1, 0);
     const setT = (sc, col, colVar, yMul = 1) => (it, m, c) => { m.compose(tmpV.set(it.x, it.h, it.z), tmpQ.setFromAxisAngle(new THREE.Vector3(0, 1, 0), it.r * 6.28), tmpS.set(it.s * sc, it.s * sc * yMul, it.s * sc)); c.set(col).offsetHSL(0, 0, (it.r - 0.5) * colVar); };
-    const all = [...lists.tree, ...lists.jtree, ...lists.mangrove];
-    instanced(trunk, lam, all, setT(1, MAP === 'bunian' ? '#d8d0e8' : '#6b4423', 0.05));
-    instanced(crown, lam, lists.tree, setT(1, pc.tree || '#3f9a3a', 0.12));
-    instanced(crown, lam, lists.jtree, setT(1.12, pc.jtree || '#2a6e2e', 0.1, 0.95));
-    instanced(crown, lam, lists.mangrove, setT(1.15, '#3d5a32', 0.08, 0.7));
-    instanced(new THREE.CylinderGeometry(0.05, 0.09, 1.5, 5).translate(0, 0.75, 0).applyMatrix4(new THREE.Matrix4().makeRotationZ(0.12)), lam, lists.palm, setT(1, '#8b6b3e', 0.05));
-    instanced(new THREE.ConeGeometry(0.85, 0.35, 7, 1, true).translate(0, 1.55, 0), new THREE.MeshLambertMaterial({ flatShading: true, side: THREE.DoubleSide }), lists.palm, setT(1, '#2e8b3e', 0.1));
+    const NAT = detail === 'high' && typeof chars3d !== 'undefined' && chars3d.natureReady ? chars3d.nature : null;
+    if (NAT) {
+      // realistic scenery (Quaternius, CC0): one model per tile, shuffled between variants
+      const Y = new THREE.Vector3(0, 1, 0);
+      const natural = (names, items, sc, tint, tv = 0.12) => {
+        const groups = names.map(() => []); items.forEach(it => groups[Math.floor(it.r * 7.31 % 1 * names.length)].push(it));
+        names.forEach((nm, gi) => { for (const pt of NAT[nm] || []) { pt.geo.userData.keep = true; pt.mat.userData.keep = true; instanced(pt.geo, pt.mat, groups[gi], (it, m, c) => { m.compose(tmpV.set(it.x, it.h - 0.03, it.z), tmpQ.setFromAxisAngle(Y, it.r * 6.28), tmpS.setScalar(it.s * sc)); c.set(tint).offsetHSL(0, 0, (it.r - 0.5) * tv); }, { chunk: 8, lod: lodOn ? 'hi' : null }); } });
+      };
+      // distant woods use light stand-ins (same size and colour), swapped for the full models as you approach
+      const lodOn = true;
+      const far = (items, sc, col, yMul = 1) => { instanced(trunk, lam, items, setT(sc * 2.2, '#5a3d22', 0.05), { chunk: 8, lod: 'lo' }); instanced(crown, lam, items, (it, m, c) => { m.compose(tmpV.set(it.x, it.h + 0.25 * sc * 2.2, it.z), tmpQ.setFromAxisAngle(Y, it.r * 6.28), tmpS.set(it.s * sc * 2.4, it.s * sc * 2.2 * yMul, it.s * sc * 2.4)); c.set(col).offsetHSL(0, 0, (it.r - 0.5) * 0.1); }, { chunk: 8, lod: 'lo' }); };
+      far(lists.tree, 0.44, pc.tree || '#4f8a3a'); far(lists.jtree, 0.55, pc.jtree || '#3f6e34', 0.95); far(lists.mangrove, 0.42, '#4d6a40', 0.8);
+      far(lists.palm, 0.3, '#3f8a3e', 0.6);
+      const leafTint = MAP === 'bunian' ? '#b9f0e6' : MAP === 'naga' ? '#d9e6b0' : '#ffffff';
+      // every forest tile gets a full tree model (two kinds, mixed) so woods read as real canopy
+      natural(['MapleTree_4', 'NormalTree_5'], lists.tree, 0.44, pc.tree ? '#e8ffe0' : leafTint);
+      natural(['NormalTree_5', 'MapleTree_4', 'NormalTree_5'], lists.jtree, 0.55, pc.jtree ? '#c4b8e8' : '#b4d4a8');
+      natural(['MapleTree_4'], lists.mangrove, 0.42, '#8aa07a');
+      natural(['PalmTree_1', 'PalmTree_2', 'PalmTree_3'], lists.palm, 0.42, '#ffffff', 0.08);
+      natural(['Rock_1', 'Rock_2', 'Rock_3'], lists.rock, 0.85, pc.rock || (MAP === 'naga' ? '#6a5a50' : '#b8b2a6'), 0.15);
+      // bushes, plants, grass and flowers scattered over open ground
+      const dec = { bush: [], plant: [], grass: [], flower: [] };
+      for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) {
+        const t = map[y * MW + x], h = hash(x, y, 41); if (t !== T.GRASS && t !== T.FLOWER && t !== T.DARK && t !== T.MOSS) continue;
+        const it = { x: x + 0.2 + hash(x, y, 42) * 0.6, z: y + 0.2 + hash(y, x, 43) * 0.6, h: heightAt((x + 0.5) * TS, (y + 0.5) * TS), r: hash(x, y, 44), s: 0.8 + hash(x, y, 45) * 0.4 };
+        if (t === T.FLOWER) dec.flower.push(it);
+        else if (h < (t === T.DARK ? 0.1 : 0.035)) dec.bush.push(it);
+        else if (h < (t === T.DARK ? 0.18 : 0.06)) dec.plant.push(it);
+        else if (h < 0.16) dec.grass.push(it);
+      }
+      natural(['Bush', 'Bush_Large', 'Bush_Flowers'], dec.bush, 0.5, MAP === 'bunian' ? '#c8f0ff' : '#ffffff');
+      natural(['Plant_1', 'Plant_2'], dec.plant, 0.4, '#ffffff');
+      natural(['Grass_Large'], dec.grass, 0.55, '#ffffff', 0.2);
+      natural(['Flower_3_Clump', 'Bush_Flowers'], dec.flower, 0.45, '#ffffff');
+    } else {
+      const all = [...lists.tree, ...lists.jtree, ...lists.mangrove];
+      instanced(trunk, lam, all, setT(1, MAP === 'bunian' ? '#d8d0e8' : '#6b4423', 0.05));
+      instanced(crown, lam, lists.tree, setT(1, pc.tree || '#3f9a3a', 0.12));
+      instanced(crown, lam, lists.jtree, setT(1.12, pc.jtree || '#2a6e2e', 0.1, 0.95));
+      instanced(crown, lam, lists.mangrove, setT(1.15, '#3d5a32', 0.08, 0.7));
+      instanced(new THREE.CylinderGeometry(0.05, 0.09, 1.5, 5).translate(0, 0.75, 0).applyMatrix4(new THREE.Matrix4().makeRotationZ(0.12)), lam, lists.palm, setT(1, '#8b6b3e', 0.05));
+      instanced(new THREE.ConeGeometry(0.85, 0.35, 7, 1, true).translate(0, 1.55, 0), new THREE.MeshLambertMaterial({ flatShading: true, side: THREE.DoubleSide }), lists.palm, setT(1, '#2e8b3e', 0.1));
+    }
     const rockCol = pc.rock;
-    instanced(new THREE.DodecahedronGeometry(0.45, 0).translate(0, 0.22, 0), lam, lists.rock, (it, m, c) => { m.compose(tmpV.set(it.x, it.h, it.z), tmpQ.setFromEuler(new THREE.Euler(it.r, it.r * 5, 0)), tmpS.set(it.s * 1.1, it.s * (0.7 + it.r * 0.5), it.s)); c.set(rockCol || (it.r > 0.85 ? '#d8dde2' : '#7a7a80')).offsetHSL(0, 0, (it.r - 0.5) * 0.1); });
+    if (!NAT) instanced(new THREE.DodecahedronGeometry(0.45, 0).translate(0, 0.22, 0), lam, lists.rock, (it, m, c) => { m.compose(tmpV.set(it.x, it.h, it.z), tmpQ.setFromEuler(new THREE.Euler(it.r, it.r * 5, 0)), tmpS.set(it.s * 1.1, it.s * (0.7 + it.r * 0.5), it.s)); c.set(rockCol || (it.r > 0.85 ? '#d8dde2' : '#7a7a80')).offsetHSL(0, 0, (it.r - 0.5) * 0.1); });
     instanced(B(1, 1.4, 1).translate(0, 0.7, 0), lam, lists.wall, (it, m, c) => { m.compose(tmpV.set(it.x, it.h, it.z), tmpQ.identity(), tmpS.set(1, 1, 1)); c.set(pc.wall || '#6b665c').offsetHSL(0, 0, (it.r - 0.5) * 0.08); });
     instanced(new THREE.CylinderGeometry(0.26, 0.32, 2, 8).translate(0, 1, 0), lam, lists.pillar, (it, m, c) => { m.compose(tmpV.set(it.x, it.h, it.z), tmpQ.identity(), tmpS.set(1, 1, 1)); c.set(pc.pillar || '#b5a98f'); });
     // crystals: clusters of glowing cones
@@ -269,7 +314,17 @@ const gfx = (() => {
     if (w.glow) glowBox(0.12, 0.06, len + 0.1, 0.1 + len / 2);
     return g;
   }
+  // realistic rigged person (js/chars3d.js); the old block figure below stays as the fallback
+  const RIG_SCALE = 0.68; // the model is 1.83 m tall; a tile is one unit and people stood about 1.25 units tall
+  function buildRig(pal, opts) {
+    const rig = chars3d.make(pal, { tied: opts.tied });
+    const root = new THREE.Group(); rig.root.scale.setScalar(RIG_SCALE); root.add(rig.root);
+    root.userData = { kind: 'rig', rig, wid: null, lastT: -1, prevAtk: 0 };
+    if (opts.scale) root.scale.setScalar(opts.scale);
+    return root;
+  }
   function buildHuman(pal, opts = {}) {
+    if (chars3d.ready) return buildRig(pal, opts);
     const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
     const head = G('head', () => new THREE.IcosahedronGeometry(0.19, 1));
     const torso = [
@@ -298,6 +353,14 @@ const gfx = (() => {
   }
   function setWeapon(m, wid) {
     const u = m.userData; if (u.wid === wid) return; u.wid = wid;
+    if (u.kind === 'rig') {
+      if (u.weapon) { u.weapon.parent && u.weapon.parent.remove(u.weapon); u.weapon = null; }
+      const w = weaponGroup(wid); if (!w.children.length) return;
+      // in the T-pose the right hand is at x -0.74; the blade points forward (+Z) like a fist holding a keris
+      const bow = WEAPONS[wid] && WEAPONS[wid].type === 'bow';
+      w.scale.setScalar(1 / RIG_SCALE); w.position.set(-0.8, 1.44, 0.0); if (bow) w.rotation.set(0, 0, Math.PI / 2);
+      chars3d.attach(u.rig, 'DEF-handR', w); u.weapon = w; return;
+    }
     while (u.hand.children.length) u.hand.remove(u.hand.children[0]);
     const w = weaponGroup(wid); w.rotation.x = 0.25; u.hand.add(w);
   }
@@ -408,6 +471,24 @@ const gfx = (() => {
   }
   function animate(m, o, t) {
     const u = m.userData, moving = !!o.moving, ph = (o.walk || t) * 11;
+    if (u.kind === 'rig') {
+      const r = u.rig, dt = u.lastT < 0 ? 0 : Math.min(0.1, Math.max(0, t - u.lastT)); u.lastT = t;
+      const atk = o.atkAnim !== undefined ? o.atkAnim : o.atk !== undefined ? o.atk : (o.swing > 0 ? o.swing / 0.3 : 0);
+      const wt = u.wid && WEAPONS[u.wid] ? WEAPONS[u.wid].type : 'fist';
+      if (atk > u.prevAtk + 0.05) { // a new swing just started: play it through, faster for quick weapons
+        const name = wt === 'bow' ? 'Spell_Simple_Shoot' : wt === 'fist' ? (Math.random() < 0.5 ? 'Punch_Jab' : 'Punch_Cross') : 'Sword_Attack';
+        const len = name === 'Sword_Attack' ? 0.55 : 0.4, clip = chars3d.clips[name];
+        chars3d.play(r, name, 0.06, true, clip ? clip.duration / len : 1); r.busy = t + len;
+      }
+      u.prevAtk = atk;
+      if (t >= r.busy) {
+        if (o.hurt > 0.1 && o !== player) { chars3d.play(r, 'Hit_Chest', 0.05, true, 1.4); r.busy = t + 0.25; }
+        else if (moving) chars3d.play(r, o.isCompanion || o === player || o.def ? 'Jog_Fwd_Loop' : 'Walk_Loop', 0.2, false, o.def && o.def.boss ? 0.85 : 1.05);
+        else chars3d.play(r, u.wid && u.wid !== 'fist' ? 'Sword_Idle' : (o.talking ? 'Idle_Talking_Loop' : 'Idle_Loop'), 0.25);
+      }
+      r.mixer.update(dt);
+      return;
+    }
     if (u.kind === 'human') {
       const sw = moving ? Math.sin(ph) : 0;
       u.legL.rotation.x = sw * 0.7; u.legR.rotation.x = -sw * 0.7;
@@ -472,14 +553,20 @@ const gfx = (() => {
     api.resize();
     api.ok = true;
     makePortraits();
+    // realistic people and scenery load in the background; until then the block models are used
+    if (typeof chars3d !== 'undefined' && location.protocol !== 'file:') {
+      chars3d.load('models/hero.glb?v=' + ASSET_V, ok => { if (!ok) return; for (const [o, m] of models) scene.remove(m); models.clear(); if (sil) { scene.remove(sil); sil = null; } makePortraits(); if (typeof ui !== 'undefined' && ui.refreshAll) ui.refreshAll(); });
+      chars3d.loadNature('models/nature.glb?v=' + ASSET_V, ok => { if (ok) api.rebuildWorld(); });
+    }
   };
+  const ASSET_V = 2;
   api.resize = function () { if (!renderer) return; renderer.setSize(W, H, false); glCanvas.style.width = W + 'px'; glCanvas.style.height = H + 'px'; camera.aspect = W / Math.max(1, H); camera.updateProjectionMatrix(); };
   api.setVisible = v => { if (glCanvas) glCanvas.style.display = v ? '' : 'none'; };
   // swap maps: dispose the old world meshes and build the new map's
   api.rebuildWorld = function () {
     if (!api.ok) return;
-    worldGroup.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== VC() && !Object.values(matCache).includes(o.material)) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
-    worldGroup.clear();
+    worldGroup.traverse(o => { if (o.geometry && !o.geometry.userData.keep) o.geometry.dispose(); if (o.material && !o.material.userData.keep && o.material !== VC() && !Object.values(matCache).includes(o.material)) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    worldGroup.clear(); lodMeshes = [];
     buildHeights(); buildGround(); buildProps(); buildBuildings();
     snapCamera = true;
   };
@@ -507,7 +594,8 @@ const gfx = (() => {
     renderer.setPixelRatio(1); renderer.setSize(S, S, false);
     for (const k in list) {
       const m = buildHuman(list[k]); m.rotation.y = 0.35; ps.add(m);
-      cam.position.set(0.35, 1.0, 1.55); cam.lookAt(0, 0.88, 0);
+      if (m.userData.kind === 'rig') { m.userData.rig.mixer.setTime(0.3); cam.position.set(0.22, 1.2, 0.95); cam.lookAt(0, 1.12, 0); }
+      else { cam.position.set(0.35, 1.0, 1.55); cam.lookAt(0, 0.88, 0); }
       renderer.render(ps, cam);
       portraits[k] = glCanvas.toDataURL();
       ps.remove(m);
@@ -533,12 +621,14 @@ const gfx = (() => {
     // camera follow
     const ph = heightAt(p.x, p.y);
     tmpV.set(p.x / TS, ph, p.y / TS);
-    const fdt = Math.min(0.1, Math.max(0, t - lastT)); lastT = t;
+    const fdt = Math.min(0.1, Math.max(0, t - lastT)); lastT = t; api.perfSample(fdt);
     const k = 1 - Math.pow(0.0005, fdt);
     if (snapCamera || tgt.distanceTo(tmpV) > 6) { tgt.copy(tmpV); snapCamera = false; } else tgt.lerp(tmpV, k);
     dist += (wantDist - dist) * k;
     camera.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist);
     camera.lookAt(tgt.x, tgt.y + 0.6, tgt.z);
+    const LR = 6 + dist * 0.4; // full-detail radius grows when zoomed out
+    for (const m of lodMeshes) { const d = Math.hypot(m.userData.cx - tgt.x, m.userData.cz - tgt.z) < LR; m.visible = m.userData.lod === 'hi' ? d : !d; }
     // region mood via fog colour
     const rd = regionDef(regionAt(Math.floor(p.x / TS), Math.floor(p.y / TS)));
     fogTarget.set(rd.fog || '#bfd8e8');
@@ -631,6 +721,16 @@ const gfx = (() => {
     plane.constant = -heightAt(player.x, player.y);
     const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(plane, hit)) return null;
     return { x: hit.x * TS, y: hit.z * TS };
+  };
+  api.getDetail = () => detail;
+  api.setDetail = v => { detail = v; try { localStorage.setItem('hikayat_tuah_detail', v); } catch (e) { } api.rebuildWorld(); };
+  // phones: if the first seconds with detailed scenery run slowly, switch to Low by itself (once)
+  let perfT = 0, perfN = 0, perfDone = false;
+  try { perfDone = localStorage.getItem('hikayat_tuah_detail') !== null; } catch (e) { }
+  api.perfSample = dt => {
+    if (perfDone || !isTouch || detail !== 'high' || !(chars3d && chars3d.natureReady) || state !== 'play') return;
+    perfT += dt; perfN++;
+    if (perfT > 8) { perfDone = true; if (perfT / perfN > 1 / 22) { api.setDetail('low'); toast('Graphics set to Low detail for smoother play (Options to change)'); } }
   };
   api.stats = () => renderer ? renderer.info.render : null;
   return api;

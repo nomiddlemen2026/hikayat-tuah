@@ -1,0 +1,21 @@
+3D models used in Hikayat Tuah
+==============================
+
+hero.glb
+  Rigged human body and animations from "Universal Animation Library" (free/standard edition)
+  by Quaternius - https://quaternius.com
+  Licence: CC0 1.0 (public domain). Obtained via https://github.com/J-Ponzo/gltf-universal-animation-library
+  Reduced to the animations the game uses and compressed. The Malay costume (baju, sampin, tanjak),
+  face and colours are added in code by js/chars3d.js.
+
+nature.glb
+  Palm trees, trees, bushes, plants, rocks, grass and flowers from "Ultimate Stylized Nature"
+  by Quaternius - https://quaternius.com
+  Licence: CC0 1.0 (public domain). Obtained via https://github.com/walterpalladino/godot-quaternius-ultimate-stylized-nature
+  Converted from FBX to glTF, simplified and compressed; bark and rock textures replaced with plain colours.
+
+lib/gltf.min.js
+  GLTFLoader, SkeletonUtils and the meshopt decoder from three.js r159 (MIT licence, see lib/THREE-LICENSE.txt),
+  bundled as a classic script.
+
+Thank you, Quaternius, for releasing these for free.

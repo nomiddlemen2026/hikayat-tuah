@@ -158,6 +158,7 @@ const ui = (() => {
     else if (a === 'sound') { muted = !muted; try { localStorage.setItem('hikayat_tuah_mute', muted ? '1' : '0'); } catch (e) { } audio.applyMute(); refreshAll(); }
     else if (a === 'resume') close('options');
     else if (a === 'full') mobile.goFull();
+    else if (a === 'detail') { gfx.setDetail(gfx.getDetail() === 'high' ? 'low' : 'high'); log('Detail: ' + gfx.getDetail() + '.', 'sys'); refreshAll(); }
     else if (a === 'gfx') { gfxMode = gfxMode === '3d' ? '2d' : '3d'; try { localStorage.setItem('hikayat_tuah_gfx', gfxMode); } catch (e) { } log('Graphics: ' + (gfxMode === '3d' ? '3D' : 'Classic 2D') + '.', 'sys'); refreshAll(); }
     else if (a === 'resetui') { savedPos = {}; try { localStorage.removeItem(POS_KEY); } catch (e) { } for (const w of Object.values(wins)) if (w.float && w.open) place(w); log('Window positions reset.', 'sys'); }
     else if (a === 'next') { if (state === 'dialog') advanceDialog(); }
@@ -270,7 +271,7 @@ const ui = (() => {
   }
 
   function rOptions() {
-    return `<div class="opts"><button data-act="sound">${muted ? 'Sound: Off' : 'Sound: On'}</button><button data-act="resetui">Reset window positions</button>${isTouch ? '<button data-act="full">Fullscreen</button>' : ''}${gfx.ok ? `<button data-act="gfx">Graphics: ${gfxMode === '3d' ? '3D' : 'Classic 2D'}</button>` : ''}<button class="pri" data-act="resume">Resume game</button></div>
+    return `<div class="opts"><button data-act="sound">${muted ? 'Sound: Off' : 'Sound: On'}</button><button data-act="resetui">Reset window positions</button>${isTouch ? '<button data-act="full">Fullscreen</button>' : ''}${gfx.ok ? `<button data-act="gfx">Graphics: ${gfxMode === '3d' ? '3D' : 'Classic 2D'}</button><button data-act="detail">Detail: ${gfx.getDetail() === 'high' ? 'High (realistic)' : 'Low (fast)'}</button>` : ''}<button class="pri" data-act="resume">Resume game</button></div>
       <table class="keys">
         <tr><th>Move</th><td>WASD / arrows · touch: drag on the left</td></tr>
         <tr><th>Camera</th><td>Right-drag or Z / X to rotate, mouse wheel to zoom · touch: rotate and zoom buttons</td></tr>
