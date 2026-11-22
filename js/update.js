@@ -22,7 +22,7 @@ function update(dt) {
   const ml = Math.hypot(mx, my);
   if (ml > 1) { mx /= ml; my /= ml; }
   const tile = getT(Math.floor(p.x / TS), Math.floor(p.y / TS));
-  const spd = 125 * (tile === T.SWAMP || tile === T.PADDY ? 0.8 : 1) * (tile === T.PATH || tile === T.BRIDGE ? 1.1 : 1);
+  const spd = 125 * (p.tiger > 0 ? 1.25 : 1) * (p.breath > 0 ? 0.5 : 1) * (tile === T.SWAMP || tile === T.PADDY ? 0.8 : 1) * (tile === T.PATH || tile === T.BRIDGE ? 1.1 : 1);
   p.moving = ml > 0.1;
   if (p.moving) { if (p.atkAnim <= 0) p.face = Math.atan2(my, mx); p.walk += dt; moveEnt(p, mx * spd * dt, my * spd * dt); }
   for (const k in p.cds) p.cds[k] -= dt; p.shield = Math.max(0, p.shield - dt);
@@ -66,6 +66,12 @@ function update(dt) {
   for (const pr of pprojs) {
     pr.x += pr.vx * dt; pr.y += pr.vy * dt; pr.life -= dt;
     const tt = getT(Math.floor(pr.x / TS), Math.floor(pr.y / TS));
+    if (pr.pierce) { // whirlwind: passes through, pulls and grinds enemies
+      pr.tick -= dt; const tick = pr.tick <= 0; if (tick) pr.tick = 0.18;
+      for (const e of enemies) { if (e.hp <= 0) continue; const d = dist(e.x, e.y, pr.x, pr.y); if (d < pr.r + e.r + 20) { if (!e.def.boss) { e.kbx += (pr.x - e.x) * 4; e.kby += (pr.y - e.y) * 4; } if (tick && d < pr.r + e.r) damageEnemy(e, pr.dmg * rr(0.9, 1.1), pr.x, pr.y, false, 0); } }
+      if (Math.random() < 0.8) { const a = rr(0, 6.28); parts.push({ x: pr.x + Math.cos(a) * 18, y: pr.y + Math.sin(a) * 18, vx: -Math.sin(a) * 120, vy: Math.cos(a) * 120 - 30, life: 0.35, col: Math.random() < 0.5 ? '#e0f2f1' : '#b2dfdb', sz: 3 }); }
+      continue;
+    }
     let hit = pr.life <= 0 || (SOLID.has(tt) && tt !== T.WATER && tt !== T.DEEP && tt !== T.LAVA);
     if (pr.kind === 'fire' && Math.random() < 0.7) parts.push({ x: pr.x, y: pr.y, vx: rr(-20, 20), vy: rr(-30, 0), life: 0.35, col: Math.random() < 0.5 ? '#ffab40' : '#ff5722', sz: 3 });
     for (const e of enemies) { if (hit) break; if (e.hp > 0 && dist(e.x, e.y, pr.x, pr.y) < e.r + pr.r) { hit = true; if (!pr.aoe) damageEnemy(e, pr.dmg, pr.x - pr.vx * 0.05, pr.y - pr.vy * 0.05, pr.crit, 0.6); } }
@@ -79,6 +85,7 @@ function update(dt) {
     }
   }
   pprojs = pprojs.filter(pr => pr.life > 0);
+  updateSkills(dt);
   for (const b of bolts) b.t -= dt; bolts = bolts.filter(b => b.t > 0);
   for (const t of teles) { t.t -= dt; if (t.follow) { t.x = t.follow.x; t.y = t.follow.y; } }
   teles = teles.filter(t => t.t > 0 && (!t.follow || t.follow.hp > 0));

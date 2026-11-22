@@ -9,7 +9,7 @@ const gfx = (() => {
   // Detail: 'high' = realistic scenery models and a smooth, finer ground; 'low' = the light block scenery
   let detail = 'high'; try { detail = localStorage.getItem('hikayat_tuah_detail') || 'high'; } catch (e) { }
   if (typeof THREE === 'undefined') return api;
-  let renderer, scene, camera, glCanvas, groundMesh, waterMesh, gateMesh, shadowMesh, particles, altarKeris, chestMeshes = [], worldGroup, shieldMesh, lavaMat;
+  let renderer, scene, camera, glCanvas, groundMesh, waterMesh, gateMesh, shadowMesh, particles, altarKeris, chestMeshes = [], worldGroup, shieldMesh, tigerMesh, breathMesh, lavaMat;
   let pitch = 1.0, dist = 15, wantDist = 15, yaw = 0, lastT = 0;
   const tgt = new THREE.Vector3(), tmpV = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3();
   const corner = new Float32Array((MW + 1) * (MH + 1));
@@ -280,6 +280,7 @@ const gfx = (() => {
   // ---------- character models (low-poly, animated limbs)
   function limb(parts, x, y, z) { const g = new THREE.Group(); g.position.set(x, y, z); g.add(meshOf(parts)); return g; }
   function weaponGroup(wid) {
+    if (typeof weapons3d !== 'undefined') return weapons3d.build(wid);
     const g = new THREE.Group(), w = WEAPONS[wid];
     if (!w || w.type === 'fist') return g;
     const blade = w.blade || '#cfd8dc';
@@ -357,7 +358,7 @@ const gfx = (() => {
       if (u.weapon) { u.weapon.parent && u.weapon.parent.remove(u.weapon); u.weapon = null; }
       const w = weaponGroup(wid); if (!w.children.length) return;
       // in the T-pose the right hand is at x -0.74; the blade points forward (+Z) like a fist holding a keris
-      const bow = WEAPONS[wid] && WEAPONS[wid].type === 'bow';
+      const bow = WEAPONS[wid] && WEAPONS[wid].type === 'bow' && WEAPONS[wid].model !== 'sumpit';
       w.scale.setScalar(1 / RIG_SCALE); w.position.set(-0.8, 1.44, 0.0); if (bow) w.rotation.set(0, 0, Math.PI / 2);
       chars3d.attach(u.rig, 'DEF-handR', w); u.weapon = w; return;
     }
@@ -521,7 +522,7 @@ const gfx = (() => {
   }
 
   // ---------- effect pools
-  let telePool = [], slashPool = [], projPool = [], boltPool = [];
+  let telePool = [], slashPool = [], projPool = [], boltPool = [], dropPool = [];
   const teleMatFill = () => new THREE.MeshBasicMaterial({ color: '#ff2828', transparent: true, opacity: 0.3, depthWrite: false });
   function getPooled(pool, make) { for (const p of pool) if (!p.used) { p.used = true; p.obj.visible = true; return p; } const p = { used: true, obj: make() }; scene.add(p.obj); pool.push(p); return p; }
   function releaseAll(pool) { for (const p of pool) { p.used = false; } }
@@ -535,6 +536,7 @@ const gfx = (() => {
       glCanvas = document.createElement('canvas'); glCanvas.id = 'gl';
       const stage = document.getElementById('stage') || document.body; stage.insertBefore(glCanvas, stage.firstChild);
       renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: !isTouch, powerPreference: 'high-performance' });
+      if (typeof weapons3d !== 'undefined') weapons3d.init(renderer);
     } catch (e) { console.warn('WebGL not available, using classic 2D view', e); if (glCanvas) glCanvas.remove(); return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.25 : 1.5));
     scene = new THREE.Scene();
@@ -546,6 +548,12 @@ const gfx = (() => {
     worldGroup = new THREE.Group(); scene.add(worldGroup);
     buildHeights(); buildGround(); buildProps(); buildBuildings();
     shieldMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), new THREE.MeshBasicMaterial({ color: '#80deea', transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending })); shieldMesh.visible = false; scene.add(shieldMesh);
+    tigerMesh = new THREE.Group();
+    for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.TorusGeometry(0.42 + i * 0.1, 0.025, 4, 28), new THREE.MeshBasicMaterial({ color: i ? '#ff9800' : '#ffe082', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending })); m.rotation.x = Math.PI / 2; m.position.y = 0.05 + i * 0.35; tigerMesh.add(m); }
+    tigerMesh.visible = false; scene.add(tigerMesh);
+    breathMesh = new THREE.Group();
+    for (let i = 0; i < 3; i++) { const geo = new THREE.ConeGeometry(1 - i * 0.25, 4.2 - i * 0.8, 16, 1, true); geo.translate(0, -(4.2 - i * 0.8) / 2, 0); geo.rotateZ(Math.PI / 2); const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: ['#ff3d00', '#ff9100', '#fff3e0'][i], transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); breathMesh.add(m); }
+    breathMesh.visible = false; scene.add(breathMesh);
     shadowMesh = new THREE.InstancedMesh(new THREE.CircleGeometry(0.32, 12).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0.28, depthWrite: false }), 160);
     shadowMesh.count = 0; shadowMesh.frustumCulled = false; scene.add(shadowMesh);
     const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(600 * 3), 3)); pg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(600 * 3), 3));
@@ -583,6 +591,7 @@ const gfx = (() => {
   api.zoom = d => { wantDist = clamp(wantDist * (1 + d), 7, 22); };
   api.pitchBy = d => { pitch = clamp(pitch + d, 0.55, 1.25); };
   api.cycleZoom = () => { wantDist = wantDist > 17 ? 10 : wantDist > 12 ? 20 : 15; };
+  api.debugCam = (d, p) => { wantDist = dist = d; pitch = p; }; // previews only
 
   // ---------- portraits (rendered once from the 3D models for the HTML windows)
   function makePortraits() {
@@ -654,6 +663,10 @@ const gfx = (() => {
       syncSilhouette(pm);
       shieldMesh.visible = p.shield > 0 && (p.shield > 2 || Math.floor(t * 8) % 2 === 0);
       if (shieldMesh.visible) { shieldMesh.position.set(p.x / TS, ph + 0.65, p.y / TS); shieldMesh.rotation.y = t; }
+      breathMesh.visible = p.breath > 0;
+      if (breathMesh.visible) { breathMesh.position.set(p.x / TS + Math.cos(p.face) * 0.35, ph + 0.75, p.y / TS + Math.sin(p.face) * 0.35); breathMesh.rotation.set(0, -p.face, 0); breathMesh.children.forEach((m, i) => { m.rotation.x = t * (8 + i * 4); const k = Math.min(1, p.breath * 2, (2 - p.breath) * 6); m.scale.set(k * (0.95 + Math.sin(t * 30 + i) * 0.05), k, k); m.material.opacity = 0.32 + Math.sin(t * 40 + i * 2) * 0.08; }); }
+      tigerMesh.visible = p.tiger > 0 && (p.tiger > 2 || Math.floor(t * 8) % 2 === 0);
+      if (tigerMesh.visible) { tigerMesh.position.set(p.x / TS, ph, p.y / TS); tigerMesh.children.forEach((m, i) => { m.rotation.z = t * (i % 2 ? -3 : 3); m.position.y = 0.05 + ((t * 0.8 + i / 3) % 1) * 1.1; m.material.opacity = 0.6 * (1 - ((t * 0.8 + i / 3) % 1)); }); }
     }
     for (const c of companions) { c.isCompanion = true; const m = syncModel(c, c.x, c.y, c.face); if (m) { animate(m, c, t); addShadow(c.x, c.y, 1); } }
     for (const n of npcs) { if (!near(n.x, n.y)) continue; const m = syncModel(n, n.x, n.y, n.kind === 'captive' ? Math.PI / 2 : Math.atan2(p.y - n.y, p.x - n.x)); if (m) { if (n.kind === 'captive' && save.bossDead[CAPTOR[n.hero]] && !m.userData.untied) { m.userData.untied = true; scene.remove(m); models.delete(n); } else { animate(m, { moving: false, seed: n.x }, t); addShadow(n.x, n.y, 1); } } }
@@ -685,12 +698,13 @@ const gfx = (() => {
     releaseAll(projPool);
     const PCOL = { orb: '#40ffaa', fire: '#ff6d00' };
     const drawProj = (pr, h) => {
-      const o = getPooled(projPool, () => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.13, 1), basic('#e8fff4'))); g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), new THREE.MeshBasicMaterial({ color: '#40ffaa', transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }))); g.add(new THREE.Mesh(B(0.32, 0.04, 0.07), basic('#cfd8dc'))); g.add(new THREE.Mesh(B(0.5, 0.025, 0.025), basic('#8d6e63'))); g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.16, 0), basic('#6d675e'))); return g; });
+      const o = getPooled(projPool, () => { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.13, 1), basic('#e8fff4'))); g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), new THREE.MeshBasicMaterial({ color: '#40ffaa', transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }))); g.add(new THREE.Mesh(B(0.32, 0.04, 0.07), basic('#cfd8dc'))); g.add(new THREE.Mesh(B(0.5, 0.025, 0.025), basic('#8d6e63'))); g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.16, 0), basic('#6d675e')));
+        const tw = new THREE.Group(); for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.85 - i * 0.18, 0.1 + i * 0.03, 1.9 - i * 0.3, 14, 1, true), new THREE.MeshBasicMaterial({ color: i ? '#e0f2f1' : '#80cbc4', transparent: true, opacity: 0.32 - i * 0.06, depthWrite: false, side: THREE.DoubleSide })); m.position.y = 0.4 + i * 0.1; tw.add(m); } g.add(tw); return g; });
       const k = pr.kind, glow = k === 'orb' || k === 'fire', c = o.obj.children;
-      c[0].visible = glow; c[1].visible = glow; c[2].visible = k === 'knife'; c[3].visible = k === 'arrow'; c[4].visible = k === 'rock';
+      c[0].visible = glow; c[1].visible = glow; c[2].visible = k === 'knife'; c[3].visible = k === 'arrow'; c[4].visible = k === 'rock'; c[5].visible = k === 'wind'; if (k === 'wind') c[5].children.forEach((m, i) => { m.rotation.y = t * (14 + i * 5); m.scale.setScalar(1 + Math.sin(t * 9 + i) * 0.06); });
       if (glow) { c[1].material.color.set(PCOL[k]); c[0].material = basic(k === 'fire' ? '#fff3e0' : '#e8fff4'); o.obj.scale.setScalar(pr.aoe ? 1.5 : 1); } else o.obj.scale.setScalar(1);
       o.obj.position.set(pr.x / TS, heightAt(pr.x, pr.y) + h, pr.y / TS);
-      o.obj.rotation.y = k === 'arrow' ? -Math.atan2(pr.vy, pr.vx) : glow ? 0 : t * 20;
+      o.obj.rotation.y = k === 'arrow' ? -Math.atan2(pr.vy, pr.vx) : glow || k === 'wind' ? 0 : t * 20; if (k === 'wind') o.obj.position.y -= 0.6;
     };
     for (const pr of projs) drawProj(pr, 0.55);
     for (const pr of pprojs) drawProj(pr, 0.6);
@@ -702,6 +716,14 @@ const gfx = (() => {
       o.obj.children.forEach((m, i) => { if (i < 4) { m.position.x = Math.sin(i * 2.3 + b.t * 40) * 0.15; m.rotation.z = Math.sin(i * 1.7 + b.t * 30) * 0.3; } m.material.opacity = Math.min(1, b.t * 4); });
     }
     hideUnused(boltPool);
+    // falling arrows (Hujan Panah)
+    releaseAll(dropPool);
+    for (const d of drops) {
+      if (d.t > 0.35) continue;
+      const o = getPooled(dropPool, () => { const g = new THREE.Group(); const sh = new THREE.Mesh(B(0.025, 0.6, 0.025), basic('#8d6e63')); g.add(sh); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 4), basic('#eceff1')); tip.rotation.x = Math.PI; tip.position.y = -0.34; g.add(tip); const fl = new THREE.Mesh(B(0.08, 0.12, 0.01), basic('#e53935')); fl.position.y = 0.26; g.add(fl); return g; });
+      o.obj.position.set(d.x / TS, heightAt(d.x, d.y) + 0.35 + d.h * d.t / 0.35, d.y / TS); o.obj.rotation.set(0.15, d.x, 0);
+    }
+    hideUnused(dropPool);
     // particles
     const pa = particles.geometry.attributes.position.array, ca = particles.geometry.attributes.color.array;
     let n = 0;

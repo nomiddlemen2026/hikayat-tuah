@@ -20,6 +20,17 @@ const WEAPONS = {
   tombakKristal: { name: 'Tombak Kristal', dmg: 112, range: 66, arc: 1.0, cd: 0.42, rarity: 'rare', type: 'spear', blade: '#80deea', glow: '#4dd0e1', tassel: '#b388ff', price: 8000, desc: 'A Bunian crystal spear. Light as air, sharp as frost.' },
   sundang: { name: 'Sundang Bunian', dmg: 124, range: 48, arc: 2.4, cd: 0.32, rarity: 'epic', type: 'keris', blade: '#b2ebf2', glow: '#80deea', desc: 'The twin-edged blade of the Bunian commander. Cold light ripples along it.' },
   kerisBunian: { name: 'Keris Bunian', dmg: 165, range: 52, arc: 2.6, cd: 0.3, rarity: 'legendary', type: 'keris', blade: '#e1bee7', glow: '#b388ff', story: true, desc: 'The hidden keris of the Bunian kings. Only a true Laksamana can wield it.' },
+  // Malaysian states arc (from Chapter 5): traditional arms of each state
+  jenawi: { name: 'Jenawi Melaka', dmg: 185, range: 54, arc: 2.4, cd: 0.4, rarity: 'rare', type: 'blade', model: 'jenawi', blade: '#e3e8ec', desc: 'The long single-edged sword of the Melaka palace guard. Long reach, clean cuts.' },
+  kerisPanjang: { name: 'Keris Panjang', dmg: 205, range: 52, arc: 2.2, cd: 0.34, rarity: 'rare', type: 'keris', model: 'kerisPanjang', blade: '#cfd8dc', desc: 'A long straight keris of the Minangkabau warriors of Negeri Sembilan. Pierces like a sword.' },
+  badik: { name: 'Badik Bugis', dmg: 225, range: 34, arc: 2.0, cd: 0.24, rarity: 'epic', type: 'keris', model: 'badik', blade: '#cfd8dc', desc: 'The belly-bladed dagger of the Bugis sea lords of Johor. Very fast stabs.' },
+  sumpit: { name: 'Sumpit Rimba', dmg: 240, range: 270, cd: 0.42, rarity: 'rare', type: 'bow', model: 'sumpit', wood: '#8d6e3a', desc: 'An Orang Asli blowpipe from the forests of Pahang. Silent darts fly far and fast.' },
+  lading: { name: 'Lading Terengganu', dmg: 265, range: 46, arc: 2.6, cd: 0.38, rarity: 'rare', type: 'blade', model: 'lading', blade: '#dfe5e8', desc: 'A Terengganu blade with a heavy flared tip. Devastating chopping swings.' },
+  tekpi: { name: 'Tekpi Kelantan', dmg: 285, range: 36, arc: 2.2, cd: 0.22, rarity: 'epic', type: 'keris', model: 'tekpi', blade: '#d5dde2', desc: 'The three-pronged silat weapon of Kelantan. Catches blades and strikes in a blur.' },
+  sewar: { name: 'Sewar Kedah', dmg: 330, range: 36, arc: 2.1, cd: 0.24, rarity: 'epic', type: 'keris', model: 'sewar', blade: '#e0e6ea', desc: 'A slim curved dagger of the northern Malay courts of Kedah and Perlis.' },
+  tombakBenderang: { name: 'Tombak Benderang', dmg: 375, range: 70, arc: 1.0, cd: 0.4, rarity: 'epic', type: 'spear', model: 'benderang', blade: '#e8eaec', tassel: '#ffd600', desc: 'The royal banner spear of Perak, carried before the Sultan.' },
+  kampilan: { name: 'Kampilan', dmg: 440, range: 60, arc: 2.8, cd: 0.48, rarity: 'epic', type: 'blade', model: 'kampilan', blade: '#d8dee2', desc: 'The great two-handed sword of the Iranun warriors of Sabah. Huge sweeping arcs.' },
+  mandau: { name: 'Mandau Dayak', dmg: 465, range: 48, arc: 2.6, cd: 0.36, rarity: 'legendary', type: 'blade', model: 'mandau', blade: '#dfe5e8', desc: 'The headhunter sword of the Dayak of Sarawak, its antler hilt hung with hair tufts.' },
 };
 const weaponValue = id => WEAPONS[id].price || WEAPONS[id].dmg * 25;
 
@@ -132,13 +143,21 @@ const CHAPTERS = {
 
 // ---- magic and skills (unlocked through chapter rewards)
 const SKILLS = {
-  silat: { name: 'Silat Spin', sp: 8, cd: 5, desc: 'Spin through every enemy around you for 160% weapon damage, briefly untouchable.' },
+  silat: { name: 'Silat Spin', sp: 8, cd: 5, kind: 'silat', desc: 'Spin through every enemy around you for 160% weapon damage, briefly untouchable.' },
+  tikam: { name: 'Tikam Kilat', sp: 14, cd: 6, kind: 'silat', lvl: 8, desc: 'Dash forward like lightning and stab every enemy in your path for 220% weapon damage.' },
   api: { name: 'Api Sakti', sp: 12, cd: 1.2, desc: 'Hurl a fireball at the nearest enemy. It explodes and burns everything close by.' },
   penawar: { name: 'Penawar', sp: 20, cd: 8, desc: 'A healing charm: restores 35% of your max HP plus more with INT.' },
   petir: { name: 'Petir', sp: 24, cd: 5, desc: 'Call lightning down on up to 5 enemies near you.' },
   perisai: { name: 'Perisai', sp: 16, cd: 18, desc: 'A shield of light that halves all damage you take for 10 seconds.' },
+  bayang: { name: 'Langkah Bayang', sp: 18, cd: 9, kind: 'silat', lvl: 14, desc: 'Vanish and reappear behind the nearest enemy with a critical strike for 300% weapon damage.' },
+  hempas: { name: 'Hempas Bumi', sp: 22, cd: 10, kind: 'silat', lvl: 20, desc: 'Slam the ground for 250% weapon damage around you. Enemies are stunned for 1.5 seconds.' },
+  harimau: { name: 'Semangat Harimau', sp: 20, cd: 25, kind: 'silat', desc: 'The spirit of the tiger: +40% attack damage and faster movement for 12 seconds.' },
+  panah: { name: 'Hujan Panah', sp: 22, cd: 7, desc: 'A rain of arrows falls on the enemies nearest you.' },
+  ombak: { name: 'Gelombang Ombak', sp: 24, cd: 7, desc: 'A crashing sea wave in front of you. Hits hard and throws enemies far back.' },
+  angin: { name: 'Puting Beliung', sp: 26, cd: 9, desc: 'Send a whirlwind forward that drags in and shreds every enemy it passes.' },
+  naga: { name: 'Nafas Naga', sp: 45, cd: 30, desc: 'Ultimate: breathe dragon fire in a wide cone for 2 seconds.' },
 };
-const SKILL_ORDER = ['silat', 'api', 'penawar', 'petir', 'perisai'];
+const SKILL_ORDER = ['silat', 'tikam', 'api', 'penawar', 'petir', 'perisai', 'bayang', 'hempas', 'harimau', 'panah', 'ombak', 'angin', 'naga'];
 
 const ITEMS = {
   jamu: { name: 'Jamu Potion', rarity: 'common', desc: 'A bitter herbal remedy. Restores 50% of max HP.', price: 40 },

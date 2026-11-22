@@ -101,10 +101,13 @@ function renderWorld2D() {
     ctx.save(); ctx.translate(pr.x, pr.y);
     if (pr.kind === 'arrow') { ctx.rotate(Math.atan2(pr.vy, pr.vx)); ctx.fillStyle = '#8d6e63'; ctx.fillRect(-9, -1, 16, 2); ctx.fillStyle = '#cfd8dc'; ctx.fillRect(7, -2, 4, 4); }
     else if (pr.kind === 'rock') { ctx.fillStyle = '#6d675e'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); }
+    else if (pr.kind === 'wind') { ctx.strokeStyle = 'rgba(178,223,219,.8)'; ctx.lineWidth = 2; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(0, -i * 7, 16 - i * 3, 5, 0, time * 12 + i, time * 12 + i + 4.5); ctx.stroke(); } }
     else if (pr.kind === 'orb' || pr.kind === 'fire') { const fire = pr.kind === 'fire'; ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(0, 0, 1, 0, 0, 9); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, fire ? 'rgba(255,120,20,.85)' : 'rgba(120,255,200,.8)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, 9, 0, 7); ctx.fill(); }
     else { ctx.rotate(time * 20); ctx.fillStyle = '#cfd8dc'; ctx.fillRect(-6, -1.5, 12, 3); ctx.fillStyle = '#5d3a1a'; ctx.fillRect(-6, -1.5, 4, 3); }
     ctx.restore();
   }
+  for (const d of drops) if (d.t < 0.35) { const hy = d.t / 0.35 * 90; ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(d.x, d.y - hy - 14); ctx.lineTo(d.x, d.y - hy); ctx.stroke(); }
+  if (player.tiger > 0) { ctx.strokeStyle = 'rgba(255,152,0,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(player.x, player.y + 8, 16, 6, 0, 0, 7); ctx.stroke(); }
   for (const b of bolts) { ctx.strokeStyle = 'rgba(255,245,157,' + Math.min(1, b.t * 4) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x, b.y - 120); for (let i = 1; i <= 6; i++) ctx.lineTo(b.x + Math.sin(i * 2.1 + b.t * 50) * 8, b.y - 120 + i * 20); ctx.stroke(); }
   if (player.shield > 0) { ctx.strokeStyle = 'rgba(128,222,234,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(player.x, player.y - 4, 20, 0, 7); ctx.stroke(); }
   for (const q of parts) { ctx.globalAlpha = Math.min(1, q.life * 3); ctx.fillStyle = q.col; ctx.fillRect(q.x - q.sz / 2, q.y - q.sz / 2, q.sz, q.sz); }

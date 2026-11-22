@@ -144,13 +144,17 @@ function completeMission() {
     writeSave();
   });
 }
+function learnSkill(id, quiet) {
+  if (!SKILLS[id] || save.skills.includes(id)) return;
+  save.skills.push(id);
+  const free = save.hotkeys.indexOf(null); if (free >= 0 && !save.hotkeys.includes(id)) save.hotkeys[free] = id;
+  if (!quiet) { log('New ' + (SKILLS[id].kind === 'silat' ? 'silat skill' : 'magic') + ': ' + SKILLS[id].name + '. It is on your skill buttons.', 'item'); toast('New skill: ' + SKILLS[id].name + '!'); }
+}
+// skills that come with experience
+function levelSkills(quiet) { for (const id of SKILL_ORDER) if (SKILLS[id].lvl && save.lvl >= SKILLS[id].lvl) learnSkill(id, quiet); }
 function giveReward(r) {
   if (!r) return;
-  if (r.skill && !save.skills.includes(r.skill)) {
-    save.skills.push(r.skill);
-    const free = save.hotkeys.indexOf(null); if (free >= 0 && !save.hotkeys.includes(r.skill)) save.hotkeys[free] = r.skill;
-    log('New magic: ' + SKILLS[r.skill].name + '. It is on your hotbar.', 'item');
-  }
+  if (r.skill) learnSkill(r.skill);
   if (r.weapon) {
     if (!save.owned.includes(r.weapon)) save.owned.push(r.weapon);
     if (WEAPONS[r.weapon].dmg > WEAPONS[save.weapon].dmg) save.weapon = r.weapon;

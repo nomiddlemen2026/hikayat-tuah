@@ -8,6 +8,10 @@ const iconCache = {};
 function iconURL(id, size = 32) {
   const key = id + size;
   if (iconCache[key]) return iconCache[key];
+  if (WEAPONS[id] && id !== 'fist' && typeof weapons3d !== 'undefined') { const u = weapons3d.icon(id, size); if (u) return iconCache[key] = u; if (!weapons3d.ready) return iconCache['2d' + key] || (iconCache['2d' + key] = twoD(id, size)); }
+  return iconCache[key] = twoD(id, size);
+}
+function twoD(id, size) {
   const c = mk(size * 2, size * 2, g => {
     g.scale(size / 16, size / 16);
     if (WEAPONS[id]) {
@@ -31,6 +35,39 @@ function iconURL(id, size = 32) {
     } else if (id === 'perisai') {
       g.fillStyle = 'rgba(128,222,234,.85)'; g.strokeStyle = '#e0f7fa'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(16, 3); g.lineTo(27, 8); g.quadraticCurveTo(27, 22, 16, 29); g.quadraticCurveTo(5, 22, 5, 8); g.closePath(); g.fill(); g.stroke();
       g.fillStyle = '#fff'; g.beginPath(); g.arc(16, 15, 3, 0, 7); g.fill();
+    } else if (id === 'tikam') {
+      g.strokeStyle = 'rgba(144,202,249,.8)'; g.lineWidth = 1.5; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(3, 12 + i * 4); g.lineTo(14, 12 + i * 4); g.stroke(); }
+      g.translate(9, 22); g.rotate(-0.55); drawWeapon(g, 'keris', 16);
+    } else if (id === 'bayang') {
+      g.fillStyle = 'rgba(124,77,255,.45)'; g.beginPath(); g.arc(11, 16, 7, 0, 7); g.fill();
+      g.fillStyle = '#1a1626'; g.beginPath(); g.arc(20, 9, 3.5, 0, 7); g.fill(); g.beginPath(); g.moveTo(15, 28); g.lineTo(17, 13); g.lineTo(24, 13); g.lineTo(26, 28); g.fill();
+      g.strokeStyle = '#b388ff'; g.lineWidth = 1.2; g.beginPath(); g.arc(20, 18, 10, 2.2, 5.2); g.stroke();
+    } else if (id === 'hempas') {
+      g.fillStyle = '#6d4c41'; g.beginPath(); g.ellipse(16, 25, 13, 4, 0, 0, 7); g.fill();
+      g.strokeStyle = '#3e2723'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(16, 24); g.lineTo(9, 27); g.moveTo(16, 24); g.lineTo(24, 28); g.moveTo(16, 24); g.lineTo(18, 21); g.stroke();
+      g.fillStyle = '#d7a86e'; g.beginPath(); g.moveTo(11, 4); g.lineTo(21, 4); g.lineTo(22, 15); g.lineTo(10, 15); g.fill(); g.fillRect(12, 15, 8, 5);
+      g.fillStyle = '#ffe082'; g.fillRect(4, 18, 3, 2); g.fillRect(25, 17, 3, 2); g.fillRect(6, 12, 2, 2); g.fillRect(24, 11, 2, 2);
+    } else if (id === 'harimau') {
+      g.fillStyle = '#ff9800'; g.beginPath(); g.ellipse(16, 17, 11, 10, 0, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(6, 10); g.lineTo(8, 3); g.lineTo(13, 8); g.fill(); g.beginPath(); g.moveTo(26, 10); g.lineTo(24, 3); g.lineTo(19, 8); g.fill();
+      g.fillStyle = '#fff3e0'; g.beginPath(); g.ellipse(16, 22, 6, 4.5, 0, 0, 7); g.fill();
+      g.fillStyle = '#212121'; g.fillRect(10, 14, 3, 2); g.fillRect(19, 14, 3, 2); g.fillRect(14.5, 19, 3, 2);
+      g.fillRect(15, 7, 2, 5); g.fillRect(6, 15, 3, 1.5); g.fillRect(23, 15, 3, 1.5); g.fillRect(7, 19, 3, 1.5); g.fillRect(22, 19, 3, 1.5);
+    } else if (id === 'panah') {
+      for (let i = 0; i < 4; i++) { const x = 6 + i * 6.5, y = 4 + (i % 2) * 6; g.fillStyle = '#8d6e63'; g.fillRect(x, y, 1.6, 14); g.fillStyle = '#eceff1'; g.beginPath(); g.moveTo(x - 1.6, y + 14); g.lineTo(x + 3.2, y + 14); g.lineTo(x + 0.8, y + 19); g.fill(); g.fillStyle = '#e53935'; g.fillRect(x - 1, y, 3.6, 3); }
+      g.fillStyle = 'rgba(255,200,0,.5)'; g.beginPath(); g.ellipse(16, 28, 13, 3, 0, 0, 7); g.fill();
+    } else if (id === 'ombak') {
+      g.fillStyle = '#0277bd'; g.beginPath(); g.moveTo(2, 30); g.quadraticCurveTo(4, 8, 20, 6); g.quadraticCurveTo(30, 6, 29, 14); g.quadraticCurveTo(22, 9, 18, 16); g.quadraticCurveTo(16, 24, 30, 30); g.closePath(); g.fill();
+      g.strokeStyle = '#e1f5fe'; g.lineWidth = 1.8; g.beginPath(); g.moveTo(5, 27); g.quadraticCurveTo(7, 11, 20, 8.5); g.quadraticCurveTo(27, 8, 28, 12); g.stroke();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(28, 13, 1.6, 0, 7); g.arc(24, 9, 1.2, 0, 7); g.fill();
+    } else if (id === 'angin') {
+      g.strokeStyle = '#b2dfdb'; g.lineCap = 'round'; for (let i = 0; i < 6; i++) { g.lineWidth = 2.6 - i * 0.3; g.beginPath(); g.ellipse(16 + Math.sin(i) * 2, 5 + i * 4.3, 12 - i * 1.7, 2.4, 0, 0.3, 5.6); g.stroke(); }
+    } else if (id === 'naga') {
+      const gr = g.createLinearGradient(10, 16, 31, 16); gr.addColorStop(0, '#fff3e0'); gr.addColorStop(0.4, '#ff9100'); gr.addColorStop(1, 'rgba(221,44,0,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(11, 15); g.lineTo(31, 5); g.lineTo(31, 27); g.closePath(); g.fill();
+      g.fillStyle = '#2e7d32'; g.beginPath(); g.moveTo(2, 12); g.lineTo(12, 11); g.lineTo(14, 16); g.lineTo(11, 21); g.lineTo(3, 20); g.fill();
+      g.fillStyle = '#1b5e20'; g.beginPath(); g.moveTo(3, 12); g.lineTo(1, 6); g.lineTo(7, 11); g.fill();
+      g.fillStyle = '#ffeb3b'; g.fillRect(6, 13, 2.4, 2);
     } else if (id === 'attack') {
       g.translate(6, 26); g.rotate(-0.8); drawWeapon(g, 'keris', 16);
     } else { // empty equipment slot silhouettes
@@ -43,7 +80,7 @@ function iconURL(id, size = 32) {
       else if (id === 'weapon') { g.translate(7, 25); g.rotate(-0.8); g.fillRect(0, -2, 22, 4); }
     }
   });
-  return iconCache[key] = c.toDataURL();
+  return c.toDataURL();
 }
 
 const ui = (() => {
@@ -195,12 +232,13 @@ const ui = (() => {
   }
   function rItems() {
     const list = invList(), cells = [];
-    for (let i = 0; i < 24; i++) {
+    const cap = Math.max(24, Math.ceil((list.length + 1) / 6) * 6);
+    for (let i = 0; i < cap; i++) {
       const it = list[i];
       if (!it) { cells.push('<div class="slot"></div>'); continue; }
       cells.push(`<div class="slot ${sel === it.id ? 'sel' : ''}" data-act="sel" data-arg="${it.id}" title="${h(it.item.name)}" style="--rc:${RARITY[it.item.rarity]}"><img src="${iconURL(it.id)}" alt="">${it.n ? `<b>${it.n}</b>` : ''}${it.eq ? '<em>E</em>' : ''}</div>`);
     }
-    return `<div class="grid">${cells.join('')}</div>${itemInfo(list.find(x => x.id === sel))}<div class="foot">${CURRENCY}: <b class="gold">${save.gold.toLocaleString()}</b><span class="sep"></span>Items ${list.length}/24</div>`;
+    return `<div class="grid">${cells.join('')}</div>${itemInfo(list.find(x => x.id === sel))}<div class="foot">${CURRENCY}: <b class="gold">${save.gold.toLocaleString()}</b><span class="sep"></span>Items ${list.length}/48</div>`;
   }
   function eqSlot(slot, label, id) {
     if (id) return `<div class="eq filled" data-act="open" data-arg="items" title="${h(WEAPONS[id].name)}"><div class="slot" style="--rc:${RARITY[WEAPONS[id].rarity]}"><img src="${iconURL(id)}" alt=""></div><div><small>${label}</small><span style="color:${RARITY[WEAPONS[id].rarity]}">${h(WEAPONS[id].name)}</span></div></div>`;
@@ -216,7 +254,7 @@ const ui = (() => {
   }
   function rSkills() {
     const rows = [['attack', 'Basic Attack', 'Passive', '—', 'Strike with your weapon. Hold the attack key or button to keep swinging. Bows shoot arrows at the nearest enemy.', true]];
-    for (const id of SKILL_ORDER) { const k = SKILLS[id], has = save.skills.includes(id); rows.push([id, k.name, has ? (id === 'silat' ? 'Silat' : 'Magic') : 'Locked', k.sp + ' SP', has ? k.desc + ' Cooldown ' + k.cd + 's.' : 'Learned later in the story.', has]); }
+    for (const id of SKILL_ORDER) { const k = SKILLS[id], has = save.skills.includes(id); rows.push([id, k.name, has ? (k.kind === 'silat' ? 'Silat' : 'Magic') : 'Locked', k.sp + ' SP', has ? k.desc + ' Cooldown ' + k.cd + 's.' : k.lvl ? 'Learned at level ' + k.lvl + '. ' + k.desc : 'Learned later in the story.', has]); }
     return `<div class="skills">${rows.map(r => `<div class="sk ${r[5] ? '' : 'locked'}" ${r[5] && r[0] !== 'attack' ? `data-act="skill" data-arg="${r[0]}"` : ''}><div class="slot"><img src="${iconURL(r[0])}" alt=""></div><div class="sd"><div><b>${r[1]}</b> <small>${r[2]}</small><span class="sp">${r[3]}</span></div><p>${h(r[4])}</p></div></div>`).join('')}</div>
       <div class="foot">Skill Points: <b>${save.skillPts}</b><span class="sep"></span>Job: ${JOBS[save.job].name}</div>
       <div class="hint">New magic goes on your hotbar automatically. Magic damage grows with INT.</div>`;

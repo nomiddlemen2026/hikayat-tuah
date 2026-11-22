@@ -87,6 +87,7 @@ function gainXP(n) {
     log('You gained ' + pts + ' status points. Open the Status window (C) to spend them.', 'sys');
     for (let i = 0; i < 30; i++) parts.push({ x: player.x + rr(-14, 14), y: player.y + rr(-10, 10), vx: 0, vy: rr(-80, -30), life: rr(0.6, 1.2), col: '#ffe082', sz: 3 });
   }
+  levelSkills();
 }
 function shoot(e, ang, kind, spd) {
   projs.push({ x: e.x, y: e.y - 8, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: kind === 'orb' || kind === 'fire' ? 6 : 4, dmg: e.def.dmg * (e.def.boss ? 0.7 : 1), life: 2.6, kind, a: ang });
@@ -96,6 +97,7 @@ function updateEnemy(e, dt) {
   e.hurt -= dt; e.swing -= dt; e.cd -= dt; e.sumCd -= dt;
   // knockback
   if (Math.abs(e.kbx) + Math.abs(e.kby) > 1) { moveEnt(e, e.kbx * dt, e.kby * dt, d.fly); e.kbx *= Math.pow(0.001, dt); e.kby *= Math.pow(0.001, dt); }
+  if (e.stun > 0) { e.stun -= dt; e.moving = false; e.tele = 0; if (d.boss) bossBar = e; if (Math.random() < dt * 8) parts.push({ x: e.x + rr(-8, 8), y: e.y - 26, vx: 0, vy: -20, life: 0.4, col: '#fff59d', sz: 3 }); return; }
   const dp = dist(e.x, e.y, p.x, p.y), dh = dist(e.x, e.y, e.hx, e.hy);
   const aggroR = d.boss ? 210 : 150;
   if (!e.aggro && dp < aggroR && state === 'play') e.aggro = true;

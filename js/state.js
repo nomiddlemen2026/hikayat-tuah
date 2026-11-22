@@ -1,7 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------- state
 let state = 'title', time = 0, shake = 0;
-let player, enemies = [], projs = [], pprojs = [], parts = [], texts = [], chests = [], npcs = [], toasts = [], teles = [], slashes = [], bolts = [];
+let player, enemies = [], projs = [], pprojs = [], parts = [], texts = [], chests = [], npcs = [], toasts = [], teles = [], slashes = [], bolts = [], pend = [], drops = [];
 let save = null, trail = [], companions = [], dialog = null, cam = { x: 0, y: 0 }, bossBar = null, muted = false;
 let lastHurt = 0, endingT = 0;
 
@@ -84,10 +84,11 @@ function startGame(fresh) {
   if (!MAPS[save.map] || !save.unlocked.includes(save.map)) save.map = 'melaka';
   if (MAP !== save.map) { genMap(save.map); gfx.rebuildWorld(); }
   miniCanvas = null;
-  player = { x: save.x, y: save.y, r: 10, hp: save.hp > 0 ? save.hp : 100, face: -Math.PI / 2, walk: 0, moving: false, atkCd: 0, atkAnim: 0, skillCd: 0, spin: 0, inv: 0, hurt: 0, regenT: 0, cds: {}, shield: 0 };
+  player = { x: save.x, y: save.y, r: 10, hp: save.hp > 0 ? save.hp : 100, face: -Math.PI / 2, walk: 0, moving: false, atkCd: 0, atkAnim: 0, skillCd: 0, spin: 0, inv: 0, hurt: 0, regenT: 0, cds: {}, shield: 0, tiger: 0, breath: 0, breathT: 0 };
   if (solidAt(player.x, player.y)) { player.x = MAPDEF.respawn.x * TS; player.y = MAPDEF.respawn.y * TS; }
   player.hp = Math.min(player.hp, maxHp());
   player.sp = Math.min(save.sp != null ? save.sp : maxSp(), maxSp());
+  levelSkills(true);
   resetWorldState();
   setupWorld();
   gfx.onWorldReady();
@@ -99,7 +100,7 @@ function startGame(fresh) {
   else setTimeout(checkChapterIntro, 400);
 }
 function resetWorldState() {
-  enemies = []; projs = []; pprojs = []; parts = []; texts = []; teles = []; slashes = []; bolts = []; trail = []; bossBar = null;
+  enemies = []; projs = []; pprojs = []; parts = []; texts = []; teles = []; slashes = []; bolts = []; pend = []; drops = []; trail = []; bossBar = null;
   for (let i = 0; i < 40; i++) trail.push({ x: player.x, y: player.y });
 }
 // sail to another map with Pak Kemudi
